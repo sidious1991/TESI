@@ -45,9 +45,9 @@ if __name__ == '__main__':
     #for tweet in tweets:
     list = api.retweets(tweet.id)
         
-    print tweet.text
+    print tweet.username # on twitter: @username
     
     for status in list:
-        json_str = json.dumps(status._json) #json.dumps(json object) returns a string
+        #json_str = json.dumps(status._json) #json.dumps(json object) returns a string
         print("retweet: ")
-        print(json_str)
+        print(status._json[u'user'][u'screen_name'])
