@@ -38,9 +38,12 @@ for tweet in tweets:
 '''  
 
 if __name__ == '__main__':  
-    tweetCriteria = got.manager.TweetCriteria().setSince("2017-11-1").setUntil("2017-11-10").setQuerySearch("#eleSicilia").setMaxTweets(5)
-    tweet = got.manager.TweetManager.getTweets(tweetCriteria)[3]
-    list = []  
+    tweetCriteria = got.manager.TweetCriteria().setSince("2017-10-1").setUntil("2017-11-10").setQuerySearch("#Regionali #Sicilia")
+    tweets = got.manager.TweetManager.getTweets(tweetCriteria)
+    for t in tweets:
+        print t.username
+    
+    '''list = []  
       
     #for tweet in tweets:
     list = api.retweets(tweet.id)
@@ -50,4 +53,4 @@ if __name__ == '__main__':
     for status in list:
         #json_str = json.dumps(status._json) #json.dumps(json object) returns a string
         print("retweet: ")
-        print(status._json[u'user'][u'screen_name'])
+        print(status._json[u'user'][u'screen_name'])'''
