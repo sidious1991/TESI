@@ -1,4 +1,5 @@
 import got
+import pickle
 
 class TwittersRetweets:
     
@@ -6,9 +7,6 @@ class TwittersRetweets:
         self.since = since
         self.until = until
         self.query = query
-        self.dictioTwitters = {} #nodes of future graph: {twitter.username: tweet_count}
-        self.dictioRetweets = {} #edges of future graph
-        self.tweetids = [] # a list of object like [{tweet_id: username}]
         self.twittapi = twittapi
     
     def setSince(self, since):
@@ -26,41 +24,58 @@ class TwittersRetweets:
     def setTwittApi(self, twittapi):
         self.twittapi = twittapi
         return self
-    
-    def getTweetIds(self):
-        return self.tweetids
-    
-    def getDictioTwitters(self):
-        return self.dictioTwitters
-    
-    def getDictioRetweets(self):
-        return self.dictioRetweets
+       
+    def computeTwitters(self, twittersfilepath, tweetsfilepath):
         
-    def computeTwitters(self):
         tweetCriteria = got.manager.TweetCriteria().setSince(self.since).setUntil(self.until).setQuerySearch(self.query)
         twitters = got.manager.TweetManager.getTweets(tweetCriteria)
         
+        dictioTwitters = {}
+        tweetids = []
+        
         for twitter in twitters:
-            self.tweetids.append({twitter.id : twitter.username})
+            tweetids.append({twitter.id : twitter.username})
             
-            if self.dictioTwitters.has_key(twitter.username):
-                self.dictioTwitters[twitter.username] += 1   
+            if dictioTwitters.has_key(twitter.username):
+                dictioTwitters[twitter.username] += 1   
             else:
-                self.dictioTwitters.update({twitter.username : 1})
-    
-        return self.dictioTwitters
-    
-    def computeRetweets(self):
+                dictioTwitters.update({twitter.username : 1})
         
-        temp_list = []
+        #serialization
+        twitters = open(twittersfilepath,'w')
+        pickle.dump(dictioTwitters, twitters)
+        tweets = open(tweetsfilepath,'w')
+        pickle.dump(tweetids, tweets)
         
-        for twid in self.tweetids:
-            for key in twid:
-                temp_list = self.twittapi.retweets(key) #retweets al tweet key dell'utente twid.key
-                user = twid[key]
-                
-            
-            
+        twitters.close()
+        tweets.close()
+        
+        return dictioTwitters
     
+    def computeRetweets(self, index, twittersfilepath, tweetsfilepath):       
+        ''' index of starting self.tweetids element '''
+
+        if index < 0:
+            return 'index not valid'
+        else:
+            twittersfile = open(twittersfilepath,'r')
+            twitters = pickle.load(twittersfile)
+            tweetsfile = open(tweetsfilepath,'r')
+            tweets = pickle.load(tweetsfile)
+            
+            retweets = {}
+            
+            if index > len(tweets) - 1:
+                return 'done'
+            
+            for i in range(index,len(tweets)):
+                for tweetkey in tweets[i].keys():
+                    tweetusername = tweets[i][tweetkey]
+            
+            twittersfile.close()
+            tweetsfile.close()
+            
+            return 'done'
+        
 if __name__ == '__main__':
     pass
