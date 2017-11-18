@@ -116,7 +116,7 @@ class TwittersRetweets:
                         #tweets list is unchanged
                         #sleep and calls itself
                         time.sleep(900)
-                        self.computeRetweets(self, i)
+                        self.computeRetweets(i)
                                                
             with open(self.twittersfilepath,'wb') as handle:
                 pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)

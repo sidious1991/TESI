@@ -9,22 +9,14 @@ api = tweepy.API(auth)
 
 if __name__ == '__main__':  
        
-    tws = TwittersRetweets('2017-11-1','2017-11-10', '#regionali#sicilia', api)
+    tws = TwittersRetweets('2017-11-1','2017-11-10', '#elezionisicilia', api)
     
     g = Graph(tws)
+    
+    print 'please wait...building your DiGraph'
+    
     g.buildgraph()
     g.showGraph()
     
-    '''
-    tw = tws.computeTwitters()
-    print tw
-    rtws = tws.computeRetweets(0)
-    print rtws
-    '''
-    '''
-    for status in list:
-        #json_str = json.dumps(status._json) #json.dumps(json object) returns a string
-        print("retweet: ")
-        print(status._json[u'user'][u'screen_name'])
-        print(status._json[u'screen_name'])
-    '''
+    print 'done'
+    
