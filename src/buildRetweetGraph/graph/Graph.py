@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import pickle
 from buildRetweetGraph.twitters_retweets.TwittersRetweets import TwittersRetweets
 
 class Graph:
@@ -7,8 +8,13 @@ class Graph:
     def __init__(self, twrtw):
         self.digraph = nx.DiGraph(topic = twrtw.getQuery())
         self.twrtw = twrtw
+        self.graphfilepath = twrtw.getQuery()+'#digraph'+'.pickle' #default path
         
-    def buildgraph(self):
+    def setGraphFilePath(self, path):
+        self.graphfilepath = path
+        return self
+        
+    def buildGraph(self):
         dictioTwitters = self.twrtw.computeTwitters()
         dictioRetwitters = self.twrtw.computeRetweets(0)
         
@@ -17,7 +23,11 @@ class Graph:
             
         
         for key in dictioRetwitters.keys():
-            self.digraph.add_edge(dictioRetwitters[key]['userfrom'], dictioRetwitters[key]['userto'], retweetcount= dictioRetwitters[key]['retweetcount'])    
+            self.digraph.add_edge(dictioRetwitters[key]['userfrom'], dictioRetwitters[key]['userto'], retweetcount=dictioRetwitters[key]['retweetcount'])    
+         
+        #serialization
+        with open(self.graphfilepath,'wb') as handle:
+            pickle.dump(self.digraph, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         return self.digraph
     

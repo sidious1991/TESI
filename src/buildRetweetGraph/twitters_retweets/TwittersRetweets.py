@@ -2,6 +2,7 @@ import got
 import pickle
 import tweepy
 import time
+import datetime
 
 class TwittersRetweets:
     
@@ -115,8 +116,9 @@ class TwittersRetweets:
                             pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
                         #tweets list is unchanged
                         #sleep and calls itself
+                        print datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
                         time.sleep(900)
-                        self.computeRetweets(i)
+                        return self.computeRetweets(i)
                                                
             with open(self.twittersfilepath,'wb') as handle:
                 pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
