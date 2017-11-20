@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 import pickle
 from buildRetweetGraph.twitters_retweets.TwittersRetweets import TwittersRetweets
 
-class Graph:
+class EndorsementGraph:
     
     def __init__(self, twrtw):
         self.digraph = nx.DiGraph(topic = twrtw.getQuery())
         self.twrtw = twrtw
         self.graphfilepath = twrtw.getQuery()+'#digraph'+'.pickle' #default path
         
-    def setGraphFilePath(self, path):
+    def setEGraphFilePath(self, path):
         self.graphfilepath = path
         return self
         
-    def buildGraph(self):
+    def buildEGraph(self):
         dictioTwitters = self.twrtw.computeTwitters()
         dictioRetwitters = self.twrtw.computeRetweets(0)
         
@@ -31,7 +31,7 @@ class Graph:
         
         return self.digraph
     
-    def showGraph(self):
+    def showEGraph(self):
         nx.draw(self.digraph)
         plt.show()
     

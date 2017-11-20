@@ -1,6 +1,6 @@
 import tweepy, pickle
 from buildRetweetGraph.twitters_retweets.TwittersRetweets import TwittersRetweets
-from buildRetweetGraph.graph.Graph import Graph
+from buildRetweetGraph.endorsementgraph.EndorsementGraph import EndorsementGraph
 
 auth = tweepy.OAuthHandler("", "")
 auth.set_access_token("", "")
@@ -9,13 +9,13 @@ api = tweepy.API(auth)
 
 if __name__ == '__main__':  
     
-    tws = TwittersRetweets('2017-11-1','2017-11-10', '#elezionisicilia', api)
+    tws = TwittersRetweets('2017-11-1','2017-11-10', 'regionali sicilia', api)
     
-    g = Graph(tws)
+    eg = EndorsementGraph(tws)
     
     print 'please wait...building your DiGraph'
     
-    g.buildGraph()
-    g.showGraph()
+    eg.buildEGraph()
+    eg.showEGraph()
     
     print 'done'
