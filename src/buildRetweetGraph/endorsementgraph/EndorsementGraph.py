@@ -23,7 +23,7 @@ class EndorsementGraph:
         
     def buildEGraph(self):
         dictioTwitters = self.twrtw.computeTwitters()
-        dictioRetwitters = self.twrtw.computeRetweets(0)
+        dictioRetwitters = self.twrtw.computeRetweets()
         
         for key in dictioTwitters.keys():
             self.digraph.add_node(key, tweetcount = dictioTwitters[key])# a node of graph has attribute tweetcount
@@ -39,7 +39,7 @@ class EndorsementGraph:
         return self.digraph
     
     def showEGraph(self):
-        nx.draw(self.digraph)
+        nx.draw_random(self.digraph)
         plt.show()
         
     

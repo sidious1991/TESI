@@ -76,8 +76,7 @@ class TwittersRetweets:
         
         return dictioTwitters
     
-    def computeRetweets(self, index):       
-        ''' index of starting self.tweetids element '''
+    def computeRetweets(self):
         
         with open(self.twittersfilepath,'rb') as handle:
             dictioTwitters = pickle.load(handle)
@@ -85,53 +84,49 @@ class TwittersRetweets:
             tweets = pickle.load(handle)
         with open(self.retweetsfilepath, 'rb') as handle:
             dictioRetweets = pickle.load(handle)  
-
-        if index < 0 or index > (len(tweets) - 1):
-            return {}
-        else:                        
-            for i in range(index,len(tweets)):
-                for tweetkey in tweets[i].keys():
+        
+        i = 0
+        
+        while i<len(tweets):
+            
+            tweetkey = (tweets[i].keys())[0] # the current dictionary of tweet id contains olny one key (tweet id)
+            tweetuser = tweets[i][tweetkey] # user who tweetted
+            tweetcount = dictioTwitters[tweetuser] # his tweetcount about this topic
+        
+            try:
+                list_statuses = self.twittapi.retweets(tweetkey) # list of status objects of retweets
                     
-                    tweetuser = tweets[i][tweetkey] # user who tweetted
-                    tweetcount = dictioTwitters[tweetuser] # his tweetcount about this topic
-                    
-                    try:
-                        list_statuses = self.twittapi.retweets(tweetkey) # list of status objects of retweets
-                    
-                        for status in list_statuses:
-                            retweetuser = (status._json['user']['screen_name']) # user who retweetted
+                for status in list_statuses:
+                    retweetuser = (status._json['user']['screen_name']) # user who retweetted
                         
-                            if not dictioTwitters.has_key(retweetuser): # insert retweet user in dictioTwitters though 
+                    if not dictioTwitters.has_key(retweetuser): # insert retweet user in dictioTwitters though 
                                 dictioTwitters.update({retweetuser: 0}) # he has not tweetted on the specific topic
                             
-                            if dictioRetweets.has_key(retweetuser+tweetuser):
+                    if dictioRetweets.has_key(retweetuser+tweetuser):
                                 den = dictioRetweets[retweetuser+tweetuser]['retweetprob']*tweetcount + 1
                                 dictioRetweets[retweetuser+tweetuser]['retweetprob'] = den/tweetcount
                         
-                            else:
-                                p = 1/tweetcount
-                                dictioRetweets.update({(retweetuser+tweetuser):{'userfrom':retweetuser,'userto':tweetuser,'retweetprob':p}})
-                    
-                    except(tweepy.error.RateLimitError):   
-                        print '###twitter rate limit error### sleeping 15 minutes...'
-                        with open(self.twittersfilepath,'wb') as handle:
-                            pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                        with open(self.retweetsfilepath, 'wb') as handle:
-                            pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                        #tweets list is unchanged
-                        #sleep and calls itself
-                        print datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-                        time.sleep(900)
-                        print 'awake'
-                        return self.computeRetweets(i)
-                                               
-            with open(self.twittersfilepath,'wb') as handle:
-                pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(self.retweetsfilepath, 'wb') as handle:
-                pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            #tweets list is unchanged
+                    else:
+                        p = 1/tweetcount
+                        dictioRetweets.update({(retweetuser+tweetuser):{'userfrom':retweetuser,'userto':tweetuser,'retweetprob':p}})
+                        
+                i += 1
+        
+            except(tweepy.error.RateLimitError):   
+                print '###twitter rate limit error### sleeping 15 minutes...'
+                #sleep and calls itself
+                print datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+                time.sleep(900)
+                print 'awake'
+                continue # i unchanged
+            
+        with open(self.twittersfilepath,'wb') as handle:
+            pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.retweetsfilepath, 'wb') as handle:
+            pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        #tweets list is unchanged
      
-            return dictioRetweets
+        return dictioRetweets
         
 if __name__ == '__main__':
     pass
