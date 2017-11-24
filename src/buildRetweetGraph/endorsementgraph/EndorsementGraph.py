@@ -23,11 +23,11 @@ class EndorsementGraph:
         dictioRetwitters = self.__twrtw.computeRetweets()
         
         for key in dictioTwitters.keys():
-            digraph.add_node(key, tweetcount = dictioTwitters[key])# a node of graph has attribute tweetcount
+            digraph.add_node(key, tweetcount = dictioTwitters[key]['tweetcount'])# a node of graph has attribute tweetcount
             
         
         for key in dictioRetwitters.keys():
-            digraph.add_edge(dictioRetwitters[key]['userfrom'], dictioRetwitters[key]['userto'], retweetprob=dictioRetwitters[key]['retweetprob'])    
+            digraph.add_edge(key[0], key[1], retweetprob=dictioRetwitters[key]['retweetprob'])    
          
         #serialization
         nx.write_gpickle(digraph, self.__graphfilepath, protocol=pickle.HIGHEST_PROTOCOL)

@@ -60,9 +60,9 @@ class TwittersRetweets:
             tweetids.append({twitter.id : twitter.username})
             
             if dictioTwitters.has_key(twitter.username):
-                dictioTwitters[twitter.username] += 1   
+                dictioTwitters[twitter.username]['tweetcount'] += 1   
             else:
-                dictioTwitters.update({twitter.username : 1})
+                dictioTwitters.update({twitter.username : {'tweetcount':1}})
         
         #serialization
         with open(self.__twittersfilepath,'wb') as handle:
@@ -91,7 +91,7 @@ class TwittersRetweets:
             
             tweetkey = (tweets[i].keys())[0] # the current dictionary of tweet id contains olny one key (tweet id)
             tweetuser = tweets[i][tweetkey] # user who tweetted
-            tweetcount = dictioTwitters[tweetuser] # his tweetcount about this topic
+            tweetcount = dictioTwitters[tweetuser]['tweetcount'] # his tweetcount about this topic
         
             try:
                 list_statuses = self.__twittapi.retweets(tweetkey) # list of status objects of retweets
@@ -100,15 +100,15 @@ class TwittersRetweets:
                     retweetuser = (status._json['user']['screen_name']) # user who retweetted
                         
                     if not dictioTwitters.has_key(retweetuser): # insert retweet user in dictioTwitters though 
-                                dictioTwitters.update({retweetuser: 0}) # he has not tweetted on the specific topic
+                        dictioTwitters.update({retweetuser: {'tweetcount':0}}) # he has not tweetted on the specific topic
                             
-                    if dictioRetweets.has_key(retweetuser+tweetuser):
-                                den = dictioRetweets[retweetuser+tweetuser]['retweetprob']*tweetcount + 1
-                                dictioRetweets[retweetuser+tweetuser]['retweetprob'] = den/tweetcount
+                    if dictioRetweets.has_key((retweetuser,tweetuser)):
+                        num = dictioRetweets[(retweetuser,tweetuser)]['retweetprob']*tweetcount + 1
+                        dictioRetweets[(retweetuser,tweetuser)]['retweetprob'] = num/tweetcount
                         
                     else:
                         p = 1/tweetcount
-                        dictioRetweets.update({(retweetuser+tweetuser):{'userfrom':retweetuser,'userto':tweetuser,'retweetprob':p}})
+                        dictioRetweets.update({(retweetuser,tweetuser):{'retweetprob':p}})
                         
                 i += 1
         
