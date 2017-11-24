@@ -10,20 +10,15 @@ api = tweepy.API(auth)
 
 if __name__ == '__main__':  
     
-    '''
-    tws = TwittersRetweets('2017-11-1','2017-11-20', '#regionali', api)
+    tws = TwittersRetweets('2017-10-20','2017-11-23', '#regionali', api)
     
     eg = EndorsementGraph(tws)
     
     print 'please wait...building your DiGraph'
     
-    eg.buildEGraph()
-    eg.showEGraph()
+    digraph = eg.buildEGraph()
+   
+    nx.draw_random(digraph)
+    plt.show()
     
     print 'done'
-    '''
-    
-    with open('../outcomes/#regionali#digraph.pickle','rb') as handle:
-        graph = pickle.load(handle)
-        nx.draw_random(graph)
-        plt.show()

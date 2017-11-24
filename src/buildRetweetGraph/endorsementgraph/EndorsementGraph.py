@@ -1,61 +1,38 @@
 import networkx as nx
-import matplotlib.pyplot as plt
 import pickle
-from buildRetweetGraph.twitters_retweets.TwittersRetweets import TwittersRetweets
 
 class EndorsementGraph:
     
     def __init__(self, twrtw):
-        self.digraph = nx.DiGraph(topic = twrtw.getQuery())
-        self.twrtw = twrtw
-        self.graphfilepath = '../outcomes/'+twrtw.getQuery()+'#digraph'+'.pickle' #default path
+        self.__twrtw = twrtw
+        self.__graphfilepath = '../outcomes/'+twrtw.getQuery()+'#digraph.pickle' #default path
         
     def setEGraphFilePath(self, path):
-        self.graphfilepath = path
+        self.__graphfilepath = path
         return self
     
     def setTwrRtw(self, twrtw):
-        self.twrtw = twrtw
+        self.__twrtw = twrtw
         return self
-    
-    def getEGraph(self):
-        return self.digraph
         
     def buildEGraph(self):
-        dictioTwitters = self.twrtw.computeTwitters()
-        dictioRetwitters = self.twrtw.computeRetweets()
+        
+        digraph = nx.DiGraph(topic = self.__twrtw.getQuery());
+        
+        dictioTwitters = self.__twrtw.computeTwitters()
+        dictioRetwitters = self.__twrtw.computeRetweets()
         
         for key in dictioTwitters.keys():
-            self.digraph.add_node(key, tweetcount = dictioTwitters[key])# a node of graph has attribute tweetcount
+            digraph.add_node(key, tweetcount = dictioTwitters[key])# a node of graph has attribute tweetcount
             
         
         for key in dictioRetwitters.keys():
-            self.digraph.add_edge(dictioRetwitters[key]['userfrom'], dictioRetwitters[key]['userto'], retweetprob=dictioRetwitters[key]['retweetprob'])    
+            digraph.add_edge(dictioRetwitters[key]['userfrom'], dictioRetwitters[key]['userto'], retweetprob=dictioRetwitters[key]['retweetprob'])    
          
         #serialization
-        with open(self.graphfilepath,'wb') as handle:
-            pickle.dump(self.digraph, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        nx.write_gpickle(digraph, self.__graphfilepath, protocol=pickle.HIGHEST_PROTOCOL)
         
-        return self.digraph
-    
-    def showEGraph(self):
-        nx.draw_random(self.digraph)
-        plt.show()
-        
-    
+        return digraph
+          
 if __name__ == "__main__":
-  
-    '''
-    DG = nx.DiGraph()
-    DG.add_nodes_from([1,2,3], tweetcount = 1)
-    DG.add_weighted_edges_from([(1,2,0.5), (3,1,0.75)])
-    DG[3][1]['weight'] += 1
-    print DG[3][1]
-    DG.node[1]['tweetcount'] += 1
-    print DG.node[1]
-    print DG.nodes
-    print DG.nodes(data = True)
-    
-    nx.draw(DG)
-    plt.show()
-    '''
+    pass

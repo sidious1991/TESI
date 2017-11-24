@@ -8,48 +8,48 @@ import datetime
 class TwittersRetweets:
     
     def __init__(self, since, until, query, twittapi):
-        self.since = since
-        self.until = until
-        self.query = query
-        self.twittapi = twittapi
-        self.twittersfilepath = '../outcomes/'+query+'#twitters'+'.pickle' # default paths
-        self.tweetsfilepath = '../outcomes/'+query+'#tweets'+'.pickle'
-        self.retweetsfilepath = '../outcomes/'+query+'#retweets'+'.pickle'
+        self.__since = since
+        self.__until = until
+        self.__query = query
+        self.__twittapi = twittapi
+        self.__twittersfilepath = '../outcomes/'+query+'#twitters.pickle' # default paths
+        self.__tweetsfilepath = '../outcomes/'+query+'#tweets.pickle'
+        self.__retweetsfilepath = '../outcomes/'+query+'#retweets.pickle'
     
     def setSince(self, since):
-        self.since = since
+        self.__since = since
         return self
     
     def setUntil(self, until):
-        self.until = until
+        self.__until = until
         return self
     
     def setQuery(self, query):
-        self.query = query
+        self.__query = query
         return self
     
     def setTwittApi(self, twittapi):
-        self.twittapi = twittapi
+        self.__twittapi = twittapi
         return self
     
     def setTwittersFilePath(self, path):
-        self.twittersfilepath = path
+        self.__twittersfilepath = path
         return self
     
     def setTweetsFilePath(self, path):
-        self.tweetsfilepath = path
+        self.__tweetsfilepath = path
         return self
     
     def setRetweetsFilePath(self, path):
-        self.retweetsfilepath = path
+        self.__retweetsfilepath = path
         return self
     
     def getQuery(self):
-        return self.query
+        return self.__query
     
     def computeTwitters(self):
         
-        tweetCriteria = got.manager.TweetCriteria().setSince(self.since).setUntil(self.until).setQuerySearch(self.query)
+        tweetCriteria = got.manager.TweetCriteria().setSince(self.__since).setUntil(self.__until).setQuerySearch(self.__query)
         twitters = got.manager.TweetManager.getTweets(tweetCriteria)
         
         dictioTwitters = {}
@@ -65,24 +65,24 @@ class TwittersRetweets:
                 dictioTwitters.update({twitter.username : 1})
         
         #serialization
-        with open(self.twittersfilepath,'wb') as handle:
+        with open(self.__twittersfilepath,'wb') as handle:
             pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
-        with open(self.tweetsfilepath,'wb') as handle:
+        with open(self.__tweetsfilepath,'wb') as handle:
             pickle.dump(tweetids, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
-        with open(self.retweetsfilepath, 'wb') as handle:
+        with open(self.__retweetsfilepath, 'wb') as handle:
             pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         return dictioTwitters
     
     def computeRetweets(self):
         
-        with open(self.twittersfilepath,'rb') as handle:
+        with open(self.__twittersfilepath,'rb') as handle:
             dictioTwitters = pickle.load(handle)
-        with open(self.tweetsfilepath,'rb') as handle:
+        with open(self.__tweetsfilepath,'rb') as handle:
             tweets = pickle.load(handle)
-        with open(self.retweetsfilepath, 'rb') as handle:
+        with open(self.__retweetsfilepath, 'rb') as handle:
             dictioRetweets = pickle.load(handle)  
         
         i = 0
@@ -94,7 +94,7 @@ class TwittersRetweets:
             tweetcount = dictioTwitters[tweetuser] # his tweetcount about this topic
         
             try:
-                list_statuses = self.twittapi.retweets(tweetkey) # list of status objects of retweets
+                list_statuses = self.__twittapi.retweets(tweetkey) # list of status objects of retweets
                     
                 for status in list_statuses:
                     retweetuser = (status._json['user']['screen_name']) # user who retweetted
@@ -120,9 +120,9 @@ class TwittersRetweets:
                 print 'awake'
                 continue # i unchanged
             
-        with open(self.twittersfilepath,'wb') as handle:
+        with open(self.__twittersfilepath,'wb') as handle:
             pickle.dump(dictioTwitters, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.retweetsfilepath, 'wb') as handle:
+        with open(self.__retweetsfilepath, 'wb') as handle:
             pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
         #tweets list is unchanged
      
