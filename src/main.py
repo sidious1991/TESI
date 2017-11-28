@@ -1,4 +1,4 @@
-import tweepy, pickle, networkx as nx
+import tweepy, networkx as nx
 import matplotlib.pyplot as plt
 from buildRetweetGraph.twitters_retweets.TwittersRetweets import TwittersRetweets
 from buildRetweetGraph.endorsementgraph.EndorsementGraph import EndorsementGraph
@@ -22,6 +22,3 @@ if __name__ == '__main__':
     plt.show()
     
     print 'done'
-
-    
-    
