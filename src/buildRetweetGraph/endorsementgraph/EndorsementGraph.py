@@ -1,5 +1,4 @@
 import networkx as nx
-import community
 import matplotlib.pyplot as plt
 import pickle
 
@@ -16,7 +15,11 @@ class EndorsementGraph:
     def setTwrRtw(self, twrtw):
         self.__twrtw = twrtw
         return self
-        
+    
+    '''
+    @return: a digraph representing the endorsement graph about the query in the observation period
+             specified in self.__twrtw. The digraph is serialized by pickle.
+    '''
     def buildEGraph(self):
         
         digraph = nx.DiGraph(topic = self.__twrtw.getQuery());
@@ -27,37 +30,35 @@ class EndorsementGraph:
         for key in dictioTwitters.keys():
             digraph.add_node(key, tweetcount = dictioTwitters[key]['tweetcount'])# a node of graph has attribute tweetcount
             
-        
         for key in dictioRetwitters.keys():
-            digraph.add_edge(key[0], key[1], retweetprob=dictioRetwitters[key]['retweetprob'])    
+            #Garimella et al. consideration (minimum number of retweets by key[0] for key[1] content)
+            if digraph.node[key[1]]['tweetcount']*dictioRetwitters[key]['retweetprob'] >= 2:
+                digraph.add_edge(key[0], key[1], retweetprob=dictioRetwitters[key]['retweetprob'])    
          
+        #Delete all the nodes with degree (outdegree+indegree) == 0
+        for node in digraph.nodes():
+            if digraph.degree(node) == 0:
+                digraph.remove_node(node)
+                 
         #serialization
         nx.write_gpickle(digraph, self.__graphfilepath, protocol=pickle.HIGHEST_PROTOCOL)
         
         return digraph
     
     '''
-    @return A tuple with: 
-            -the partition of digraph (using Louvain Algorithm), with communities numbered from 0 to number of communities
-            -number of communities
+    @return ...
     '''
     def communities(self, digraph):
-        
-        partition = community.best_partition(digraph.to_undirected())
-        return (partition,float(len(set(partition.values())))) 
-    
+        #metis or louvain?
+        pass
     '''
-    @param digraph: directed graph (endorsement graph for a particular query
-    @param edge: a tuple (source,target).It is an edge that does not belong to 
-                 digraph we want to calculate the prediction index.
-    @return: a list of probabilities. For each path from source to target this 
-            function computes the product of retweetprobs for each edge in the path.
-            *** here insert my heuristics **
+    @param digraph: directed graph (endorsement graph for a particular query)
+    @param edge: a tuple (source,target).It is a directed edge that does not 
+                 belong to digraph we want to calculate the acceptance probability.
+    @return: acceptance probability of edge (u,v)
     '''
-    def MyLinkPrediction(self, digraph, edge):
-              
-        for path in nx.all_simple_paths(digraph, edge[0], edge[1]):
-            pass
+    def LinkPrediction(self, digraph, edge):
+        pass
           
 if __name__ == "__main__":
     pass

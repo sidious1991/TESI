@@ -47,6 +47,10 @@ class TwittersRetweets:
     def getQuery(self):
         return self.__query
     
+    '''
+    @return: dictioTwitters, that is a dictionary like {username:{tweetcount:..},username:{tweetcount:..}...},
+             of users who tweeted about the query and in the observation period specified.
+    '''
     def computeTwitters(self):
         
         tweetCriteria = got.manager.TweetCriteria().setSince(self.__since).setUntil(self.__until).setQuerySearch(self.__query)
@@ -76,6 +80,10 @@ class TwittersRetweets:
         
         return dictioTwitters
     
+    '''
+    @return: dictioRetweets, that is a dictionary like {(retweetuser,tweetuser):{retweetprob:..},...},
+             of retweets about the query.
+    '''
     def computeRetweets(self):
         
         with open(self.__twittersfilepath,'rb') as handle:
