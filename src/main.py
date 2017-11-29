@@ -10,7 +10,8 @@ api = tweepy.API(auth)
 
 if __name__ == '__main__':  
     
-    tws = TwittersRetweets('2017-10-20','2017-11-23', '#regionali', api)
+    #from one month earlier to a week later the election date in Sicily
+    tws = TwittersRetweets('2017-10-05','2017-11-12', '#regionali', api)
     
     eg = EndorsementGraph(tws)
     

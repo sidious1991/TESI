@@ -1,4 +1,5 @@
 import networkx as nx
+import nxmetis
 import matplotlib.pyplot as plt
 import pickle
 
@@ -36,7 +37,7 @@ class EndorsementGraph:
                 digraph.add_edge(key[0], key[1], retweetprob=dictioRetwitters[key]['retweetprob'])    
          
         #Delete all the nodes with degree (outdegree+indegree) == 0
-        for node in digraph.nodes():
+        for node in digraph.nodes().keys():
             if digraph.degree(node) == 0:
                 digraph.remove_node(node)
                  
