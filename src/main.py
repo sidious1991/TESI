@@ -18,7 +18,7 @@ if __name__ == '__main__':
     print 'please wait...building your DiGraph'
     
     digraph = eg.buildEGraph()
-   
+
     nx.draw_random(digraph)
     plt.show()
     
