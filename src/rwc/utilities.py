@@ -1,7 +1,8 @@
 from __future__ import division
 import networkx as nx
 import community
-from networkx.classes.function import degree
+import scipy as sp
+import numpy as np
 
 def personalizedPageRank(path, graph):
     
@@ -46,26 +47,61 @@ def personalizedPageRank(path, graph):
     
     return (r_x,r_y,comms)
     
-def c_vectors(path, graph):
+def rwc(path, graph, k):
     
     if path is None and graph is None:
-        return ()
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+
+    (r_x,r_y,comms) = personalizedPageRank(path, g)
+    
+    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
+    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
+    degrees = g.degree(g.nodes().keys())
+    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    
+    c_x = []
+    c_y = []
+    
+    #inizialization
+    for i in range(0,len(degrees)):
+        c_x.append(0)
+        c_y.append(0)
+    
+    minimum = min(k,len(sorted_x),len(sorted_y))
+    
+    for i in range(0,minimum):
+        c_x[sorted_x[i][0]] = 1
+        c_y[sorted_y[i][0]] = 1
+    
+    rwc = 0
+    
+    for i in range(0,len(degrees)):
+        rwc += (c_x[i]-c_y[i])*(r_x[i]-r_y[i])
+    
+    return rwc
+
+def M(path, graph, a, personal):
+    
+    if path is None and graph is None:
+        return
     
     g = nx.read_gpickle(path) if path is not None else graph
     
-    (r_x,r_y,comms) = personalizedPageRank(path, g)
-    
-    degrees_x = g.degree(comms[0])
-    degrees_y = g.degree(comms[1])
-    degrees = g.degree(g.nodes().keys())
-    
-    print degrees_x
-    print degrees_y
-    print degrees
-    
+    p = nx.google_matrix(g, alpha=a, personalization=personal)#per righe
+
+    id = np.identity(len(g.nodes()))
+
+    m = np.subtract(id,np.dot(a,p)) 
+
+    return m
+
 if __name__ == '__main__':
     
-    c_vectors('../../outcomes/parted_graph.pickle', None)
+    r = rwc('../../outcomes/parted_graph.pickle', None, 40)
+    print r
     
     
     
