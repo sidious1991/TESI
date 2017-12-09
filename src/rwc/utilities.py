@@ -1,10 +1,23 @@
 from __future__ import division
 import networkx as nx
+import matplotlib.pyplot as plt
 import community
 import scipy as sp
 import numpy as np
 
-def personalizedPageRank(path, graph):
+'''
+    Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
+'''
+
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None)
+    @param a: is the dumping parameter (probability to continue)
+    @return as indicated in the paper, the personalized PageRank vector for the random walk starting in X (r_x) with restart 
+            vector e_x = uniform(X) and restart probability 1-a, and similarly for r_y. 
+            It also returns the two communities found.
+'''
+def personalizedPageRank(path, graph, a):
     
     if path is None and graph is None:
         return ()
@@ -39,22 +52,30 @@ def personalizedPageRank(path, graph):
                 n_start_x.update({node: 0})
                 n_start_y.update({node: p_y})
     
-    e_x = n_start_x
-    e_y = n_start_y
+    e_x = n_start_x # uniform in x
+    e_y = n_start_y # uniform in y
     
-    r_x = nx.pagerank(g, alpha=0.85, personalization=e_x, nstart=n_start_x)
-    r_y = nx.pagerank(g, alpha=0.85, personalization=e_y, nstart=n_start_y)
+    r_x = nx.pagerank(g, alpha=a, personalization=e_x, nstart=n_start_x)
+    r_y = nx.pagerank(g, alpha=a, personalization=e_y, nstart=n_start_y)
     
     return (r_x,r_y,comms)
     
-def rwc(path, graph, k):
+'''
+   This is Random Walk Controversy score.
+   @param path: is the path to diGraph (if not None)
+   @param graph: is a diGraph (if not None) 
+   @param a: is the dumping parameter (probability to continue)
+   @param k: is the number of the 'high-degree vertices' to consider in each community
+   @return the rwc of the diGraph
+'''    
+def rwc(path, graph, a, k):
     
     if path is None and graph is None:
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (r_x,r_y,comms) = personalizedPageRank(path, g)
+    (r_x,r_y,comms) = personalizedPageRank(path, g, a)
     
     degrees_x = g.degree(comms[0]) #comm X -- to be ordered
     degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
@@ -83,6 +104,13 @@ def rwc(path, graph, k):
     
     return rwc
 
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param a: is the dumping parameter (probability to continue)
+    @param personal: is the restart vector
+    @return the M_x or M_y matrix (source Garimella et alii), depending on the restart vector (personal)
+'''
 def M(path, graph, a, personal):
     
     if path is None and graph is None:
@@ -90,17 +118,17 @@ def M(path, graph, a, personal):
     
     g = nx.read_gpickle(path) if path is not None else graph
     
-    p = nx.google_matrix(g, alpha=a, personalization=personal)#per righe
+    P = nx.google_matrix(g, alpha=1, personalization=personal, dangling=personal) # Transition matrix (per row)
 
-    id = np.identity(len(g.nodes()))
+    I = np.identity(len(g.nodes()))
 
-    m = np.subtract(id,np.dot(a,p)) 
+    m = np.subtract(I,np.dot(a,P))
 
     return m
 
 if __name__ == '__main__':
     
-    r = rwc('../../outcomes/parted_graph.pickle', None, 40)
+    r = rwc('../../outcomes/parted_graph.pickle', None, 0.85, 40)
     print r
     
     

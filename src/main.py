@@ -4,8 +4,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from bsddb.dbshelve import HIGHEST_PROTOCOL
 
-auth = tweepy.OAuthHandler("gG7Uto0Blfozze6eJFUUfCxtB", "IiTxDx6oX6YujOyDAqG2ORBFziEcSRAjHny5oT4G88XNysBxhZ")
-auth.set_access_token("928998853361176578-zfPgfVajCvmIp8JoHxwSC7MfDf0lfgL", "G5r0R3iyO8ZOFYEK1UyIWJhWA4vWJoKkq5d2fcSz2EoOp")
+auth = tweepy.OAuthHandler("", "")
+auth.set_access_token("", "")
 api = tweepy.API(auth)
 
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     '''
     
     '''
-    G = nx.random_partition_graph([80,80],.30,.001)
+    G = nx.random_partition_graph([80,80],.30,.001, directed=True)
     
     nx.write_gpickle(G, '../outcomes/parted_graph.pickle', protocol=HIGHEST_PROTOCOL)
     
