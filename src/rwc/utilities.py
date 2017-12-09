@@ -126,16 +126,69 @@ def M(path, graph, a, personal):
 
     return m
 
+
+def deltaRwc(path, graph, a, k, sourcev, destv):
+
+    if path is None and graph is None:
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    
+    partition = community.best_partition(g.to_undirected())
+    
+    comms = {}
+    
+    for node in partition.keys():
+        key = partition[node]
+        if comms.has_key(key):
+            comms[key].append(node)
+        else:
+            comms.update({key:[node]})
+            
+    num_x = len(comms[0])
+    num_y = len(comms[1])
+    p_x = 1/num_x
+    p_y = 1/num_y
+    
+    e_x = np.zeros(len(g.nodes()))
+    e_y = np.zeros(len(g.nodes()))
+    e_x_dictio = {}
+    e_y_dictio = {}
+    
+    for key in comms.keys():
+        for node in comms[key]:
+            if key == 0:
+                e_x[node] = p_x
+                e_x_dictio.update({node: p_x})
+                e_y_dictio.update({node: 0})              
+            else:
+                e_y[node] = p_y
+                e_x_dictio.update({node: 0})
+                e_y_dictio.update({node: p_y})
+    
+    sourcecomm = partition[sourcev] #community of start vertex
+    dangling = (g.out_degree(sourcev) == 0) #bool source is a dangling vertex
+
+    M_x = M(None,g,a,e_x_dictio)
+    M_y = M(None,g,a,e_y_dictio)
+    
+    c_x = np.zeros(len(g.nodes()))
+    c_y = np.zeros(len(g.nodes()))
+    
+    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
+    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
+    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    
+    minimum = min(k,len(sorted_x),len(sorted_y))
+    
+    for i in range(0,minimum):
+        c_x[sorted_x[i][0]] = 1
+        c_y[sorted_y[i][0]] = 1
+
 if __name__ == '__main__':
     
     r = rwc('../../outcomes/parted_graph.pickle', None, 0.85, 40)
     print r
-    
-    
-    
-    
-    
-    
-    
     
     
