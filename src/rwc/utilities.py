@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import community
 import scipy as sp
 import numpy as np
+from scipy import linalg
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -13,11 +14,10 @@ import numpy as np
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
     @param a: is the dumping parameter (probability to continue)
-    @return as indicated in the paper, the personalized PageRank vector for the random walk starting in X (r_x) with restart 
-            vector e_x = uniform(X) and restart probability 1-a, and similarly for r_y. 
-            It also returns the two communities found.
+    @return the communities of the graph, the personalization vectors for the communities,
+            the c_x and c_y vectors, the partition and m_x and m_y inverted
 '''
-def personalizedPageRank(path, graph, a):
+def computeData(path, graph, k, a):
     
     if path is None and graph is None:
         return ()
@@ -55,10 +55,30 @@ def personalizedPageRank(path, graph, a):
     e_x = n_start_x # uniform in x
     e_y = n_start_y # uniform in y
     
-    r_x = nx.pagerank(g, alpha=a, personalization=e_x, nstart=n_start_x)
-    r_y = nx.pagerank(g, alpha=a, personalization=e_y, nstart=n_start_y)
+    c_x = []
+    c_y = []
     
-    return (r_x,r_y,comms)
+    degrees = g.degree(g.nodes().keys())
+    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
+    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
+    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    
+    #inizialization
+    for i in range(0,len(degrees)):
+        c_x.append(0)
+        c_y.append(0)
+    
+    minimum = min(k,len(sorted_x),len(sorted_y))
+    
+    for i in range(0,minimum):
+        c_x[sorted_x[i][0]] = 1
+        c_y[sorted_y[i][0]] = 1
+    
+    m_x = M(None, g, a, e_x)
+    m_y = M(None, g, a, e_y)
+    
+    return (e_x,e_y,c_x,c_y,linalg.inv(m_x),linalg.inv(m_y),comms,partition)
     
 '''
    This is Random Walk Controversy score.
@@ -75,35 +95,16 @@ def rwc(path, graph, a, k):
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (r_x,r_y,comms) = personalizedPageRank(path, g, a)
+    (e_x,e_y,c_x,c_y,m_x_inv,m_y_inv,comms,part) = computeData(path, g, k, a)    
     
-    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
-    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
-    degrees = g.degree(g.nodes().keys())
-    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    sub_c = np.subtract(c_x,c_y)
     
-    c_x = []
-    c_y = []
+    sub_m = np.subtract(np.dot(m_x_inv,e_x.values()),np.dot(m_y_inv,e_y.values()))
+   
+    rwc_m = np.dot(np.dot(sub_c,(1-a)),sub_m)
     
-    #inizialization
-    for i in range(0,len(degrees)):
-        c_x.append(0)
-        c_y.append(0)
-    
-    minimum = min(k,len(sorted_x),len(sorted_y))
-    
-    for i in range(0,minimum):
-        c_x[sorted_x[i][0]] = 1
-        c_y[sorted_y[i][0]] = 1
-    
-    rwc = 0
-    
-    for i in range(0,len(degrees)):
-        rwc += (c_x[i]-c_y[i])*(r_x[i]-r_y[i])
-    
-    return rwc
-
+    return rwc_m
+   
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
@@ -127,68 +128,30 @@ def M(path, graph, a, personal):
     return m
 
 
-def deltaRwc(path, graph, a, k, sourcev, destv):
+def deltaRwc(path, graph, a, k, data, sourcev, destv):
 
     if path is None and graph is None:
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
-    
-    partition = community.best_partition(g.to_undirected())
-    
-    comms = {}
-    
-    for node in partition.keys():
-        key = partition[node]
-        if comms.has_key(key):
-            comms[key].append(node)
-        else:
-            comms.update({key:[node]})
-            
-    num_x = len(comms[0])
-    num_y = len(comms[1])
-    p_x = 1/num_x
-    p_y = 1/num_y
-    
-    e_x = np.zeros(len(g.nodes()))
-    e_y = np.zeros(len(g.nodes()))
-    e_x_dictio = {}
-    e_y_dictio = {}
-    
-    for key in comms.keys():
-        for node in comms[key]:
-            if key == 0:
-                e_x[node] = p_x
-                e_x_dictio.update({node: p_x})
-                e_y_dictio.update({node: 0})              
-            else:
-                e_y[node] = p_y
-                e_x_dictio.update({node: 0})
-                e_y_dictio.update({node: p_y})
-    
-    sourcecomm = partition[sourcev] #community of start vertex
-    dangling = (g.out_degree(sourcev) == 0) #bool source is a dangling vertex
 
-    M_x = M(None,g,a,e_x_dictio)
-    M_y = M(None,g,a,e_y_dictio)
+    (e_x,e_y,c_x,c_y,m_x_inv,m_y_inv,comms,part) = data 
     
-    c_x = np.zeros(len(g.nodes()))
-    c_y = np.zeros(len(g.nodes()))
+    sourcecomm = part[sourcev] #community of start vertex
+    dangling = (g.out_degree(sourcev) == 0) #bool source is a dangling vertex
     
-    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
-    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
-    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    sub_c = np.subtract(c_x,c_y)
     
-    minimum = min(k,len(sorted_x),len(sorted_y))
+    u = np.zeros(len(g.nodes()))
+    u[sourcev] = 1
     
-    for i in range(0,minimum):
-        c_x[sorted_x[i][0]] = 1
-        c_y[sorted_y[i][0]] = 1
+    v = np.zeros(len(g.nodes()))
+    v[destv] = 1
+    
+    
 
 if __name__ == '__main__':
     
     r = rwc('../../outcomes/parted_graph.pickle', None, 0.85, 40)
     print r
-    
     

@@ -27,12 +27,11 @@ if __name__ == '__main__':
     print 'done'
     '''
     
-    '''
     G = nx.random_partition_graph([80,80],.30,.001, directed=True)
     
     nx.write_gpickle(G, '../outcomes/parted_graph.pickle', protocol=HIGHEST_PROTOCOL)
     
     nx.draw(G)
     plt.show()
-    '''
+    
     
