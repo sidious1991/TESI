@@ -13,9 +13,10 @@ from scipy import linalg
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
+    @param k: is the number of the 'high-degree vertices' to consider in each community
     @param a: is the dumping parameter (probability to continue)
     @return the communities of the graph, the personalization vectors for the communities,
-            the c_x and c_y vectors, the partition and m_x and m_y inverted
+            the c_x and c_y vectors, the partition and mats_x, mats_y tuples from M method
 '''
 def computeData(path, graph, k, a):
     
@@ -40,20 +41,17 @@ def computeData(path, graph, k, a):
     p_x = 1/num_x
     p_y = 1/num_y
     
-    n_start_x = {}
-    n_start_y = {}
+    e_x = {}
+    e_y = {}
     
     for key in comms.keys():
         for node in comms[key]:
             if key == 0:
-                n_start_x.update({node: p_x})
-                n_start_y.update({node: 0})             
+                e_x.update({node: p_x})
+                e_y.update({node: 0})             
             else:
-                n_start_x.update({node: 0})
-                n_start_y.update({node: p_y})
-    
-    e_x = n_start_x # uniform in x
-    e_y = n_start_y # uniform in y
+                e_x.update({node: 0})
+                e_y.update({node: p_y})
     
     c_x = []
     c_y = []
@@ -75,42 +73,19 @@ def computeData(path, graph, k, a):
         c_x[sorted_x[i][0]] = 1
         c_y[sorted_y[i][0]] = 1
     
-    m_x = M(None, g, a, e_x)
-    m_y = M(None, g, a, e_y)
+    mats_x = M(None, g, a, e_x)
+    mats_y = M(None, g, a, e_y)
     
-    return (e_x,e_y,c_x,c_y,linalg.inv(m_x),linalg.inv(m_y),comms,partition)
+    return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition)
     
-'''
-   This is Random Walk Controversy score.
-   @param path: is the path to diGraph (if not None)
-   @param graph: is a diGraph (if not None) 
-   @param a: is the dumping parameter (probability to continue)
-   @param k: is the number of the 'high-degree vertices' to consider in each community
-   @return the rwc of the diGraph
-'''    
-def rwc(path, graph, a, k):
     
-    if path is None and graph is None:
-        return
-    
-    g = nx.read_gpickle(path) if path is not None else graph
-
-    (e_x,e_y,c_x,c_y,m_x_inv,m_y_inv,comms,part) = computeData(path, g, k, a)    
-    
-    sub_c = np.subtract(c_x,c_y)
-    
-    sub_m = np.subtract(np.dot(m_x_inv,e_x.values()),np.dot(m_y_inv,e_y.values()))
-   
-    rwc_m = np.dot(np.dot(sub_c,(1-a)),sub_m)
-    
-    return rwc_m
-   
-'''
+    '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
     @param a: is the dumping parameter (probability to continue)
     @param personal: is the restart vector
-    @return the M_x or M_y matrix (source Garimella et alii), depending on the restart vector (personal)
+    @return the M_x or M_y matrix inverted (source Garimella et alii), depending on the restart vector (personal)
+            and P_x or P_y matrix
 '''
 def M(path, graph, a, personal):
     
@@ -125,20 +100,54 @@ def M(path, graph, a, personal):
 
     m = np.subtract(I,np.dot(a,P))
 
-    return m
+    m_inv = linalg.inv(m)
+    
+    p_array = np.array(P)
 
-
-def deltaRwc(path, graph, a, k, data, sourcev, destv):
+    return (m_inv,p_array)
+    
+    
+'''
+   This is Random Walk Controversy score.
+   @param a: is the dumping parameter (probability to continue)
+   @param data: tuple returned by computeData
+   @return the rwc of the diGraph
+'''    
+def rwc(a, data):
+    
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data    
+    
+    sub_c = np.subtract(c_x,c_y)
+    
+    sub_m = np.subtract(np.dot(mats_x[0],e_x.values()),np.dot(mats_y[0],e_y.values()))
+   
+    rwc_m = np.dot(np.dot(sub_c,(1-a)),sub_m)
+    
+    return rwc_m
+   
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param a: is the dumping parameter (probability to continue)
+    @param data: tuple returned by computeData
+    @param sourcev: outgoing node
+    @param destv: incoming node
+    @return the delta rwc by 'Sherman-Morrison'
+'''
+def deltaRwc(path, graph, a, data, sourcev, destv):
 
     if path is None and graph is None:
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (e_x,e_y,c_x,c_y,m_x_inv,m_y_inv,comms,part) = data 
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data 
     
     sourcecomm = part[sourcev] #community of start vertex
-    dangling = (g.out_degree(sourcev) == 0) #bool source is a dangling vertex
+    p = mats_x[1] if sourcecomm == 0 else mats_y[1]
+    q = g.out_degree(sourcev) #out_degree of source
+    source_row = p[sourcev,:] #row of sourcev in its transition matrix
+    dangling = (q == 0) #bool source is a dangling vertex
     
     sub_c = np.subtract(c_x,c_y)
     
@@ -148,10 +157,49 @@ def deltaRwc(path, graph, a, k, data, sourcev, destv):
     v = np.zeros(len(g.nodes()))
     v[destv] = 1
     
+    z_x = np.zeros(len(g.nodes()))
+    z_y = np.zeros(len(g.nodes()))
     
+    if dangling:
+        z_x = np.subtract(e_x,v)
+        z_y = np.subtract(e_y,v)
+        
+    else:
+        #print source_row
+        z_x = np.dot(1/(q+1),source_row)
+        z_x[destv] = -1/(q+1)
+        z_y = np.dot(1/(q+1),source_row)
+        z_y[destv] = -1/(q+1)
+        
+    
+    mx_z = np.dot(a,np.dot(mats_x[0],z_x))
+    u_mx = np.dot(u,mats_x[0])
+    my_z = np.dot(a,np.dot(mats_y[0],z_y))
+    u_my = np.dot(u,mats_y[0])
+    den_x = 1 + np.dot(u,mx_z)
+    den_y = 1 + np.dot(u,my_z)
+    num_x = np.dot(mx_z,u_mx)
+    num_y = np.dot(my_z,u_my)
+    
+    x_factor = np.dot((num_x/den_x),e_x.values())#vector 
+    y_factor = np.dot((num_y/den_y),e_y.values())#vector
+    
+    ''' Sherman-Morrison Formula '''
+    
+    delta = (1-a)*np.dot(sub_c,np.subtract(y_factor,x_factor))
+    
+    return delta
+
+def fagin():
+    pass
 
 if __name__ == '__main__':
     
-    r = rwc('../../outcomes/parted_graph.pickle', None, 0.85, 40)
+    graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    r = rwc(0.85, graphData)
     print r
+    
+    delta = deltaRwc('../../outcomes/parted_graph.pickle', None, 0.85, graphData, 0, 150)
+    print delta
+    
     
