@@ -16,11 +16,12 @@ from scipy import linalg
     @param k: is the number of the 'high-degree vertices' to consider in each community
     @param a: is the dumping parameter (probability to continue)
     @return the communities of the graph, the personalization vectors for the communities,
-            the c_x and c_y vectors, the partition and mats_x, mats_y tuples from M method
+            the c_x and c_y vectors, the partition and mats_x, mats_y tuples from M method,
+            the sorted_x and sorted_y nodes of communities (by degree)
 '''
 def computeData(path, graph, k, a):
     
-    if path is None and graph is None:
+    if path is None and graph is None or k < 0:
         return ()
     
     g = nx.read_gpickle(path) if path is not None else graph
@@ -76,7 +77,7 @@ def computeData(path, graph, k, a):
     mats_x = M(None, g, a, e_x)
     mats_y = M(None, g, a, e_y)
     
-    return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition)
+    return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,sorted_x,sorted_y)
     
     
     '''
@@ -115,7 +116,7 @@ def M(path, graph, a, personal):
 '''    
 def rwc(a, data):
     
-    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data    
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data    
     
     sub_c = np.subtract(c_x,c_y)
     
@@ -130,18 +131,20 @@ def rwc(a, data):
     @param graph: is a diGraph (if not None) 
     @param a: is the dumping parameter (probability to continue)
     @param data: tuple returned by computeData
-    @param sourcev: outgoing node
-    @param destv: incoming node
+    @param edge: edge to add
     @return the delta rwc by 'Sherman-Morrison'
 '''
-def deltaRwc(path, graph, a, data, sourcev, destv):
+def deltaRwc(path, graph, a, data, edge):
 
     if path is None and graph is None:
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data 
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data 
+    
+    sourcev = edge[0]
+    destv = edge[1]
     
     sourcecomm = part[sourcev] #community of start vertex
     p = mats_x[1] if sourcecomm == 0 else mats_y[1]
@@ -165,7 +168,6 @@ def deltaRwc(path, graph, a, data, sourcev, destv):
         z_y = np.subtract(e_y,v)
         
     else:
-        #print source_row
         z_x = np.dot(1/(q+1),source_row)
         z_x[destv] = -1/(q+1)
         z_y = np.dot(1/(q+1),source_row)
@@ -190,16 +192,57 @@ def deltaRwc(path, graph, a, data, sourcev, destv):
     
     return delta
 
-def fagin():
-    pass
+
+def deltaMatrix(path, graph, a, k1, k2, data):
+    
+    if path is None and graph is None or (k1 < 0 or k2 < 0):
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    sorted_x = data[8]
+    sorted_y = data[9]
+
+    min_k1 = min(k1,len(sorted_x))
+    min_k2 = min(k2,len(sorted_y))
+
+    dictio = {}
+
+    adj_mat = np.array(nx.attr_matrix(g)[0])
+    
+    for i in range(0,min_k1):
+        for j in range(0,min_k2):
+            if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
+                e = (sorted_x[i][0],sorted_y[j][0])
+                dictio.update({e : deltaRwc(None, g, a, data, e)})
+            if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
+                e = (sorted_y[j][0],sorted_x[i][0])
+                dictio.update({e : deltaRwc(None, g, a, data, e)})
+
+    dict_sorted = sorted(dictio.iteritems(), key=lambda (k,v):(v))
+    '''
+    count = 0
+    for i in range(0,len(dict_sorted)):
+        count += dict_sorted[i][1]
+    
+    print count
+    '''
+    return dict_sorted
+
+
+def fagin(sorted_delta, sorted_prob, k):
+    
+    if k < 0:
+        return 
+    
+    min_k = min(k,len(sorted_delta))
+
 
 if __name__ == '__main__':
     
     graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    
     r = rwc(0.85, graphData)
     print r
     
-    delta = deltaRwc('../../outcomes/parted_graph.pickle', None, 0.85, graphData, 0, 150)
-    print delta
-    
-    
+    sorted_delta = deltaMatrix('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
+    print sorted_delta
