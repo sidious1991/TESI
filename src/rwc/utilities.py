@@ -80,7 +80,7 @@ def computeData(path, graph, k, a):
     return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,sorted_x,sorted_y)
     
     
-    '''
+'''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
     @param a: is the dumping parameter (probability to continue)
@@ -218,7 +218,7 @@ def deltaMatrix(path, graph, a, k1, k2, data):
                 e = (sorted_y[j][0],sorted_x[i][0])
                 dictio.update({e : deltaRwc(None, g, a, data, e)})
 
-    dict_sorted = sorted(dictio.iteritems(), key=lambda (k,v):(v))
+    dict_sorted = sorted(dictio.iteritems(), key=lambda (k,v):(v,k))
     '''
     count = 0
     for i in range(0,len(dict_sorted)):
@@ -231,7 +231,7 @@ def deltaMatrix(path, graph, a, k1, k2, data):
 
 def fagin(sorted_delta, sorted_prob, k):
     
-    if k < 0:
+    if k < 0 or len(sorted_delta) != len(sorted_prob):
         return 
     
     min_k = min(k,len(sorted_delta))
