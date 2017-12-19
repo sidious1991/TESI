@@ -1,0 +1,153 @@
+import utilities as ut
+import numpy as np
+import networkx as nx
+
+'''
+    Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
+'''
+
+'''
+   This is Random Walk Controversy score.
+   @param a: is the dumping parameter (probability to continue)
+   @param data: tuple returned by computeData
+   @return the rwc of the diGraph
+'''    
+def rwc(a, data):
+    
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data    
+    
+    sub_c = np.subtract(c_x,c_y)
+    
+    sub_m = np.subtract(np.dot(mats_x[0],e_x.values()),np.dot(mats_y[0],e_y.values()))
+   
+    rwc_m = np.dot(np.dot(sub_c,(1-a)),sub_m)
+    
+    return rwc_m
+   
+   
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param a: is the dumping parameter (probability to continue)
+    @param data: tuple returned by computeData
+    @param edge: edge to add
+    @return the delta rwc by 'Sherman-Morrison'
+'''
+def deltaRwc(path, graph, a, data, edge):
+
+    if path is None and graph is None:
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data 
+    
+    sourcev = edge[0]
+    destv = edge[1]
+    
+    sourcecomm = part[sourcev] #community of start vertex
+    p = mats_x[1] if sourcecomm == 0 else mats_y[1]
+    q = g.out_degree(sourcev) #out_degree of source
+    source_row = p[sourcev,:] #row of sourcev in its transition matrix
+    dangling = (q == 0) #bool source is a dangling vertex
+    
+    sub_c = np.subtract(c_x,c_y)
+    
+    u = np.zeros(len(g.nodes()))
+    u[sourcev] = 1
+    
+    v = np.zeros(len(g.nodes()))
+    v[destv] = 1
+    
+    z_x = np.zeros(len(g.nodes()))
+    z_y = np.zeros(len(g.nodes()))
+    
+    if dangling:
+        z_x = np.subtract(e_x,v)
+        z_y = np.subtract(e_y,v)
+        
+    else:
+        z_x = np.dot(1/(q+1),source_row)
+        z_x[destv] = -1/(q+1)
+        z_y = np.dot(1/(q+1),source_row)
+        z_y[destv] = -1/(q+1)
+        
+    mx_z = np.dot(a,np.dot(mats_x[0],z_x))
+    u_mx = np.dot(u,mats_x[0])
+    my_z = np.dot(a,np.dot(mats_y[0],z_y))
+    u_my = np.dot(u,mats_y[0])
+    den_x = 1 + np.dot(u,mx_z)
+    den_y = 1 + np.dot(u,my_z)
+    num_x = np.dot(mx_z,u_mx)
+    num_y = np.dot(my_z,u_my)
+    
+    x_factor = np.dot((num_x/den_x),e_x.values())#vector 
+    y_factor = np.dot((num_y/den_y),e_y.values())#vector
+    
+    ''' Sherman-Morrison Formula '''
+    
+    delta = (1-a)*np.dot(sub_c,np.subtract(y_factor,x_factor))
+    
+    return delta
+
+
+'''
+'''
+def deltaMatrix(path, graph, a, k1, k2, data):
+    
+    if path is None and graph is None or (k1 < 0 or k2 < 0):
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    sorted_x = data[8]
+    sorted_y = data[9]
+
+    min_k1 = min(k1,len(sorted_x))
+    min_k2 = min(k2,len(sorted_y))
+
+    dictio = {}
+
+    adj_mat = np.array(nx.attr_matrix(g)[0])
+    
+    for i in range(0,min_k1):
+        for j in range(0,min_k2):
+            if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
+                e = (sorted_x[i][0],sorted_y[j][0])
+                dictio.update({e : deltaRwc(None, g, a, data, e)})
+            if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
+                e = (sorted_y[j][0],sorted_x[i][0])
+                dictio.update({e : deltaRwc(None, g, a, data, e)})
+
+    dict_sorted = sorted(dictio.iteritems(), key=lambda (k,v):(v,k))
+    '''
+    count = 0
+    for i in range(0,len(dict_sorted)):
+        count += dict_sorted[i][1]
+    
+    print count
+    '''
+    return dict_sorted
+
+
+'''
+'''
+def fagin(sorted_delta, sorted_prob, k):
+    
+    if k < 0 or len(sorted_delta) != len(sorted_prob):
+        return 
+    
+    min_k = min(k,len(sorted_delta))
+    
+
+if __name__ == '__main__':
+    
+    graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    
+    r = rwc(0.85, graphData)
+    print r
+    
+    sorted_delta = deltaMatrix('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
+    print sorted_delta
+    
+    prob = ut.acceptanceProbability((1,-0.54))
+    print prob
