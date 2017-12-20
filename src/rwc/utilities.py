@@ -125,3 +125,66 @@ def acceptanceProbability(pscores):
     prob = np.exp(-work)
     
     return prob
+
+
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param data: tuple returned by computeData
+    @return polarization score for each node in digraph.
+            Algorithm used (adapted) from source:
+            
+            Measuring Political Polarization: Twitter shows the two sides of Venezuela
+            A. J. Morales, J. Borondo, J. C. Losada and R. M. Benito
+            Grupo de Sistemas Complejos. Universidad Politecnica de Madrid.
+            ETSI Agronomos, 28040, Madrid, Spain
+'''
+def polarizationScore(path, graph, data):
+    
+    if path is None and graph is None:
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data
+    
+    max_iter = 16
+    
+    dictio_polarization = {0:{}}
+    adj = nx.attr_matrix(g)
+    adj_array = np.array(adj[0])
+    nodes = adj[1]
+    
+    #initialization
+    for node in part.keys():
+        
+        mypart = part[node]
+        maxpol = 1 if mypart == 0 else -1
+        
+        mypol = maxpol if g.degree(node) == 0 else maxpol*(g.in_degree(node)/g.degree(node))
+        
+        dictio_polarization[0].update({node:mypol})
+
+    #iterations
+    for i in range(1,max_iter+1):
+        dictio_polarization.update({i:{}})
+        for j in nodes:
+            row = adj_array[j]
+            sum_pol = 0
+            for k in nodes:
+                sum_pol += row[k]*dictio_polarization[i-1][k]
+            
+            dictio_polarization[i].update({j:(sum_pol/g.out_degree(j))})
+
+    return dictio_polarization[max_iter]
+
+
+if __name__ == '__main__':
+    
+    pass
+    
+    
+    
+    
+
+

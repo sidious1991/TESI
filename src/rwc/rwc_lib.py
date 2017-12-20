@@ -1,6 +1,8 @@
-import utilities as ut
+from __future__ import division
 import numpy as np
 import networkx as nx
+import utilities as ut
+from rwc.utilities import polarizationScore
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -92,6 +94,15 @@ def deltaRwc(path, graph, a, data, edge):
 
 
 '''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None)
+    @param a: is the dumping parameter (probability to continue)
+    @param k1: number of nodes of community X to consider, 
+               ordered in decreasing order of degree
+    @param k2: number of nodes of community Y to consider, 
+               ordered in decreasing order of degree
+    @return a list of tuples. Each tuple is of type (edge:decrease_of_rwc).
+            The list returned is ordered in increasing order of decrease_of_rwc.
 '''
 def deltaMatrix(path, graph, a, k1, k2, data):
     
@@ -149,5 +160,9 @@ if __name__ == '__main__':
     sorted_delta = deltaMatrix('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
     print sorted_delta
     
-    prob = ut.acceptanceProbability((1,-0.54))
+    prob = ut.acceptanceProbability((-0.89,1))
     print prob
+    
+    polarizations = ut.polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
+    print polarizations
+    
