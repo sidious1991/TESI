@@ -101,10 +101,13 @@ def deltaRwc(path, graph, a, data, edge):
                ordered in decreasing order of degree
     @param k2: number of nodes of community Y to consider, 
                ordered in decreasing order of degree
-    @return a list of tuples. Each tuple is of type (edge:decrease_of_rwc).
+    @return a tuple of two lists:
+            the first is a list of tuples. Each tuple is of type (edge:decrease_of_rwc).
             The list returned is ordered in increasing order of decrease_of_rwc.
+            the second is a list of tuples. Each tuple is of type (edge:acceptance_probability).
+            The list returned is ordered in decreasing order of acceptance_probability.
 '''
-def deltaMatrix(path, graph, a, k1, k2, data):
+def deltaProbabOrdered(path, graph, a, k1, k2, data):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
@@ -116,20 +119,25 @@ def deltaMatrix(path, graph, a, k1, k2, data):
     min_k1 = min(k1,len(sorted_x))
     min_k2 = min(k2,len(sorted_y))
 
-    dictio = {}
-
+    dictio_delta = {}
+    dictio_prob = {}
+    
+    dictioPol = ut.polarizationScore(None, g, data) # Dictionary {node:polarization}
     adj_mat = np.array(nx.attr_matrix(g)[0])
     
     for i in range(0,min_k1):
         for j in range(0,min_k2):
             if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
                 e = (sorted_x[i][0],sorted_y[j][0])
-                dictio.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_prob.update({e : ut.acceptanceProbability((dictioPol[sorted_x[i][0]],dictioPol[sorted_y[j][0]]))})
             if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
                 e = (sorted_y[j][0],sorted_x[i][0])
-                dictio.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_prob.update({e : ut.acceptanceProbability((dictioPol[sorted_y[j][0]],dictioPol[sorted_x[i][0]]))})
 
-    dict_sorted = sorted(dictio.iteritems(), key=lambda (k,v):(v,k))
+    dict_delta_sorted = sorted(dictio_delta.iteritems(), key=lambda (k,v):(v,k))
+    dict_prob_sorted = sorted(dictio_prob.iteritems(), key=lambda (k,v):(v,k), reverse=True)
     '''
     count = 0
     for i in range(0,len(dict_sorted)):
@@ -137,10 +145,10 @@ def deltaMatrix(path, graph, a, k1, k2, data):
     
     print count
     '''
-    return dict_sorted
-
+    return (dict_delta_sorted,dict_prob_sorted)
 
 '''
+    @param k: number of edge to propose
 '''
 def fagin(sorted_delta, sorted_prob, k):
     
@@ -157,12 +165,8 @@ if __name__ == '__main__':
     r = rwc(0.85, graphData)
     print r
     
-    sorted_delta = deltaMatrix('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
-    print sorted_delta
+    sorted = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
+    print sorted[0]#delta
+    print sorted[1]#prob
     
-    prob = ut.acceptanceProbability((-0.89,1))
-    print prob
-    
-    polarizations = ut.polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
-    print polarizations
     
