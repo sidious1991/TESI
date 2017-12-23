@@ -132,7 +132,7 @@ def acceptanceProbability(pscores):
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
     @param data: tuple returned by computeData
-    @return polarization score for each node in digraph.
+    @return polarization score for each node in diGraph.
             Algorithm used (adapted) from source:
             
             Measuring Political Polarization: Twitter shows the two sides of Venezuela
@@ -151,8 +151,12 @@ def polarizationScore(path, graph, data):
     
     (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data
     
-    max_iter = 100 # da sistemare...
+    alpha = 1e-3 #if the error is sufficiently small stop iterations
+    tocontinue = True #true if necessary other iterations (error > alpha for some node)
+    
+    #we take the top 5% of nodes of X community (ordered in decreasing order of %in_degree) as "Elite Nodes"
     num_top_x = int(math.ceil(0.05*len(comms[0])))
+    #we take the top 5% of nodes of Y community (ordered in decreasing order of %in_degree) as "Elite Nodes"
     num_top_y = int(math.ceil(0.05*len(comms[1])))
     dictio_polarization = {0:{}}
     ratio_x = {}
@@ -180,26 +184,33 @@ def polarizationScore(path, graph, data):
         else:
             dictio_polarization[0].update({ratio_y_ordered[i][0]:0})
     
-    
     row_order = g.nodes()
     adj = nx.attr_matrix(g,rc_order=row_order)
-    adj_array = np.array(adj)
+    adj_array = np.array(adj)#numpy
     
+    iter = 1
     #iterations
-    for i in range(1,max_iter+1):
-        dictio_polarization.update({i:{}})
+    while tocontinue:
+        
+        tocontinue = False
+        dictio_polarization.update({iter:{}})
+        
         for j in range(0,len(ratio_x_ordered)):
             
             if j >= num_top_x:
                 row = adj_array[ratio_x_ordered[j][0]]
                 sum_pol = 0
                 for k in row_order:
-                    sum_pol += row[k]*dictio_polarization[i-1][k]
-            
-                dictio_polarization[i].update({ratio_x_ordered[j][0]:(sum_pol/g.out_degree(ratio_x_ordered[j][0]))})   
- 
+                    sum_pol += row[k]*dictio_polarization[iter-1][k]
+                    
+                newval = sum_pol/g.out_degree(ratio_x_ordered[j][0])
+                oldval = dictio_polarization[iter-1][ratio_x_ordered[j][0]]
+                dictio_polarization[iter].update({ratio_x_ordered[j][0]:(newval)})   
+                
+                tocontinue = math.fabs((newval-oldval)/oldval) > alpha if oldval != 0 else (math.fabs(newval-oldval)) > alpha
+                
             else:
-                dictio_polarization[i].update({ratio_x_ordered[j][0]:ratio_x_ordered[j][1]})
+                dictio_polarization[iter].update({ratio_x_ordered[j][0]:ratio_x_ordered[j][1]})
         
         for j in range(0,len(ratio_y_ordered)):
             
@@ -207,14 +218,20 @@ def polarizationScore(path, graph, data):
                 row = adj_array[ratio_y_ordered[j][0]]
                 sum_pol = 0
                 for k in row_order:
-                    sum_pol += row[k]*dictio_polarization[i-1][k]
-            
-                dictio_polarization[i].update({ratio_y_ordered[j][0]:(sum_pol/g.out_degree(ratio_y_ordered[j][0]))})   
+                    sum_pol += row[k]*dictio_polarization[iter-1][k]
+                    
+                newval = sum_pol/g.out_degree(ratio_y_ordered[j][0])
+                oldval = dictio_polarization[iter-1][ratio_y_ordered[j][0]]
+                dictio_polarization[iter].update({ratio_y_ordered[j][0]:(newval)})   
+                
+                tocontinue = math.fabs((newval-oldval)/oldval) > alpha if oldval != 0 else (math.fabs(newval-oldval)) > alpha
  
             else:
-                dictio_polarization[i].update({ratio_y_ordered[j][0]:-ratio_y_ordered[j][1]})     
+                dictio_polarization[iter].update({ratio_y_ordered[j][0]:-ratio_y_ordered[j][1]})     
  
-    return dictio_polarization[max_iter]
+        iter += 1
+    
+    return dictio_polarization[iter-1]
 
 if __name__ == '__main__':
     

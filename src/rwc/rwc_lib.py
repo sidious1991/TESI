@@ -101,13 +101,14 @@ def deltaRwc(path, graph, a, data, edge):
                ordered in decreasing order of degree
     @param k2: number of nodes of community Y to consider, 
                ordered in decreasing order of degree
+    @param dictioPol: polarization score of nodes ({node:polarization ...})
     @return a tuple of two lists:
             the first is a list of tuples. Each tuple is of type (edge:decrease_of_rwc).
             The list returned is ordered in increasing order of decrease_of_rwc.
             the second is a list of tuples. Each tuple is of type (edge:acceptance_probability).
             The list returned is ordered in decreasing order of acceptance_probability.
 '''
-def deltaProbabOrdered(path, graph, a, k1, k2, data):
+def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
@@ -122,7 +123,6 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data):
     dictio_delta = {}
     dictio_prob = {}
     
-    dictioPol = ut.polarizationScore(None, g, data) # Dictionary {node:polarization}
     adj_mat = np.array(nx.attr_matrix(g)[0])
     
     for i in range(0,min_k1):
@@ -161,11 +161,12 @@ def fagin(sorted_delta, sorted_prob, k):
 if __name__ == '__main__':
     
     graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    dictioPol = ut.polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
     
     r = rwc(0.85, graphData)
     print r
     
-    sorted = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData)
+    sorted = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData,dictioPol)
     print sorted[0]#delta
     print sorted[1]#prob
     
