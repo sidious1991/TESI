@@ -240,7 +240,3 @@ if __name__ == '__main__':
     pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
     print pol
     
-    
-    
-
-

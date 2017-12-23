@@ -103,8 +103,8 @@ def deltaRwc(path, graph, a, data, edge):
                ordered in decreasing order of degree
     @param dictioPol: polarization score of nodes ({node:polarization ...})
     @return a tuple of two lists:
-            the first is a list of tuples. Each tuple is of type (edge:decrease_of_rwc).
-            The list returned is ordered in increasing order of decrease_of_rwc.
+            the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
+            The list returned is ordered in increasing order of delta_of_rwc.
             the second is a list of tuples. Each tuple is of type (edge:acceptance_probability).
             The list returned is ordered in decreasing order of acceptance_probability.
 '''
@@ -148,6 +148,8 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
     return (dict_delta_sorted,dict_prob_sorted)
 
 '''
+    @param sorted_delta: first element of tuple returned by deltaProbabOrdered
+    @param sorted_prob: second element of tuple returned by deltaProbabOrdered
     @param k: number of edge to propose
 '''
 def fagin(sorted_delta, sorted_prob, k):
@@ -164,10 +166,11 @@ if __name__ == '__main__':
     dictioPol = ut.polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
     
     r = rwc(0.85, graphData)
-    print r
+    print "RWC score =%13.10f"%r #%width.precisionf
     
     sorted = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData,dictioPol)
-    print sorted[0]#delta
-    print sorted[1]#prob
+    print len(sorted[0])#delta
+    print len(sorted[1])#prob
     
+    fagin(sorted[0],sorted[1],50)
     
