@@ -4,11 +4,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from bsddb.dbshelve import HIGHEST_PROTOCOL
 
-'''
 auth = tweepy.OAuthHandler("", "")
 auth.set_access_token("", "")
 api = tweepy.API(auth)
-'''
+
 
 if __name__ == '__main__':  
     

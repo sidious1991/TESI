@@ -5,6 +5,7 @@ import community
 import scipy as sp
 import numpy as np
 from scipy import linalg
+import math
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -138,6 +139,8 @@ def acceptanceProbability(pscores):
             A. J. Morales, J. Borondo, J. C. Losada and R. M. Benito
             Grupo de Sistemas Complejos. Universidad Politecnica de Madrid.
             ETSI Agronomos, 28040, Madrid, Spain
+            
+            This algorithm is based on LABEL-PROPAGATION
 '''
 def polarizationScore(path, graph, data):
     
@@ -148,41 +151,77 @@ def polarizationScore(path, graph, data):
     
     (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data
     
-    max_iter = 16
-    
+    max_iter = 100 # da sistemare...
+    num_top_x = int(math.ceil(0.05*len(comms[0])))
+    num_top_y = int(math.ceil(0.05*len(comms[1])))
     dictio_polarization = {0:{}}
-    adj = nx.attr_matrix(g)
-    adj_array = np.array(adj[0])
-    nodes = adj[1]
+    ratio_x = {}
+    ratio_y = {}
+    
+    for i in comms[0]:
+        ratio_x.update({i:g.in_degree(i)/g.degree(i)})
+    
+    for i in comms[1]:
+        ratio_y.update({i:g.in_degree(i)/g.degree(i)})
+        
+    ratio_x_ordered = sorted(ratio_x.iteritems(), key=lambda (k,v):(v,k), reverse=True)
+    ratio_y_ordered = sorted(ratio_y.iteritems(), key=lambda (k,v):(v,k), reverse=True)
     
     #initialization
-    for node in part.keys():
-        
-        mypart = part[node]
-        maxpol = 1 if mypart == 0 else -1
-        
-        mypol = maxpol if g.degree(node) == 0 else maxpol*(g.in_degree(node)/g.degree(node))
-        
-        dictio_polarization[0].update({node:mypol})
-
+    for i in range(0,len(ratio_x_ordered)):
+        if i < num_top_x:
+            dictio_polarization[0].update({ratio_x_ordered[i][0]:ratio_x_ordered[i][1]})
+        else:
+            dictio_polarization[0].update({ratio_x_ordered[i][0]:0})
+            
+    for i in range(0,len(ratio_y_ordered)):
+        if i < num_top_y:
+            dictio_polarization[0].update({ratio_y_ordered[i][0]:-ratio_y_ordered[i][1]})
+        else:
+            dictio_polarization[0].update({ratio_y_ordered[i][0]:0})
+    
+    
+    row_order = g.nodes()
+    adj = nx.attr_matrix(g,rc_order=row_order)
+    adj_array = np.array(adj)
+    
     #iterations
     for i in range(1,max_iter+1):
         dictio_polarization.update({i:{}})
-        for j in nodes:
-            row = adj_array[j]
-            sum_pol = 0
-            for k in nodes:
-                sum_pol += row[k]*dictio_polarization[i-1][k]
+        for j in range(0,len(ratio_x_ordered)):
             
-            dictio_polarization[i].update({j:(sum_pol/g.out_degree(j))})
-
+            if j >= num_top_x:
+                row = adj_array[ratio_x_ordered[j][0]]
+                sum_pol = 0
+                for k in row_order:
+                    sum_pol += row[k]*dictio_polarization[i-1][k]
+            
+                dictio_polarization[i].update({ratio_x_ordered[j][0]:(sum_pol/g.out_degree(ratio_x_ordered[j][0]))})   
+ 
+            else:
+                dictio_polarization[i].update({ratio_x_ordered[j][0]:ratio_x_ordered[j][1]})
+        
+        for j in range(0,len(ratio_y_ordered)):
+            
+            if j >= num_top_y:
+                row = adj_array[ratio_y_ordered[j][0]]
+                sum_pol = 0
+                for k in row_order:
+                    sum_pol += row[k]*dictio_polarization[i-1][k]
+            
+                dictio_polarization[i].update({ratio_y_ordered[j][0]:(sum_pol/g.out_degree(ratio_y_ordered[j][0]))})   
+ 
+            else:
+                dictio_polarization[i].update({ratio_y_ordered[j][0]:-ratio_y_ordered[j][1]})     
+ 
     return dictio_polarization[max_iter]
-
 
 if __name__ == '__main__':
     
-    pass
+    graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
     
+    pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
+    print pol
     
     
     
