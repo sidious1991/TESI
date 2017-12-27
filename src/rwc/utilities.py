@@ -6,10 +6,55 @@ import scipy as sp
 import numpy as np
 from scipy import linalg
 import math
+from Cython.Plex.Regexps import SwitchCase
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
 '''
+
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None)
+    @param type: if 1 nodes of each community ordered by in_degree,
+                 else nodes of each community ordered by ratio in_degree/degree_tot
+'''
+def sortNodes(path, graph, type):
+    
+    if path is None and graph is None:
+        return ()
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    
+    comms = {}
+    degrees_x = []
+    degrees_y = []
+    
+    partition = community.best_partition(g.to_undirected())
+    
+    for node in partition.keys():
+        key = partition[node]
+        if comms.has_key(key):
+            comms[key].append(node)
+        else:
+            comms.update({key:[node]})
+            
+    if type == 1:
+        
+        degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
+        degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
+    
+    else:
+        for i in comms[0]:
+            degrees_x.append((i,g.in_degree(i)/g.degree(i)))
+            
+        for j in comms[1]:
+            degrees_y.append((j,g.in_degree(j)/g.degree(j)))
+    
+    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+
+    return (sorted_x,sorted_y)
+
 
 '''
     @param path: is the path to diGraph (if not None)
@@ -59,8 +104,10 @@ def computeData(path, graph, k, a):
     c_y = []
     
     degrees = g.degree(g.nodes().keys())
+    
     degrees_x = g.degree(comms[0]) #comm X -- to be ordered
     degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
+        
     sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
     sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
     
@@ -239,4 +286,8 @@ if __name__ == '__main__':
     
     pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
     print pol
+    
+    tuple = sortNodes('../../outcomes/parted_graph.pickle', None, 2)
+    print tuple[0]
+    print tuple[1]
     

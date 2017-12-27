@@ -102,6 +102,9 @@ def deltaRwc(path, graph, a, data, edge):
     @param k2: number of nodes of community Y to consider, 
                ordered in decreasing order of degree
     @param dictioPol: polarization score of nodes ({node:polarization ...})
+    @param type: if 0 nodes of each community ordered by degree_tot,
+                 elif 1 nodes of each community ordered by in_degree,
+                 else nodes of each community ordered by ratio in_degree/degree_tot
     @return a tuple of two lists and two dictionaries:
             the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
             The list returned is ordered in increasing order of delta_of_rwc.
@@ -109,15 +112,19 @@ def deltaRwc(path, graph, a, data, edge):
             The list returned is ordered in decreasing order of acceptance_probability.
             The two dictionaries are the unsorted versions of the two lists.
 '''
-def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
+def deltaProbabOrdered(path, graph, a, k1, k2, data, type, dictioPol):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
-    sorted_x = data[8]
-    sorted_y = data[9]
-
+    
+    if type == 0:
+        sorted_x = data[8]
+        sorted_y = data[9]
+    else:
+        (sorted_x,sorted_y) = ut.sortNodes(None, g, type)
+    
     min_k1 = min(k1,len(sorted_x))
     min_k2 = min(k2,len(sorted_y))
 
@@ -142,10 +149,11 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
 
     return (dict_delta_sorted,dictio_delta,dict_prob_sorted,dictio_prob)
 
+
 '''
     @param data: tuple returned by deltaProbabOrdered
     @param k: number of edge to propose
-    @return the top k edges, whose scoring function is acceptance_probability*delta_rwc
+    @return the top k edges, whose scoring function is EXPECTED DELTA_RWC (id est acceptance_probability*delta_rwc)
             Source: http://www.inf.unibz.it/dis/teaching/SDB/reports/report_mitterer.pdf
 '''
 def fagin(data, k):
@@ -185,8 +193,9 @@ def fagin(data, k):
         bool += 1
         
     sortedR = sorted(R.iteritems(), key=lambda (k,v):(v,k))
-    
+     
     return sortedR[0:k]
+
 
 if __name__ == '__main__':
     
@@ -196,7 +205,20 @@ if __name__ == '__main__':
     r = rwc(0.85, graphData)
     print "RWC score =%13.10f"%r #%width.precisionf
     
-    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData,dictioPol)
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 0, dictioPol)
     
     R = fagin(sorted_dp,5)
+    print "Expected Decrease -- degree type : "
+    print R
+    
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 1, dictioPol)
+    
+    R = fagin(sorted_dp,5)
+    print "Expected Decrease -- in_degree type : "
+    print R
+    
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 2, dictioPol)
+    
+    R = fagin(sorted_dp,5)
+    print "Expected Decrease -- ratio type : "
     print R

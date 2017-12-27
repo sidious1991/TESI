@@ -46,20 +46,6 @@ class EndorsementGraph:
         
         return digraph
     
-    '''
-    @return ...
-    '''
-    def communities(self, digraph):
-        #metis or louvain?
-        pass
-    '''
-    @param digraph: directed graph (endorsement graph for a particular query)
-    @param edge: a tuple (source,target).It is a directed edge that does not 
-                 belong to digraph we want to calculate the acceptance probability.
-    @return: acceptance probability of edge (u,v)
-    '''
-    def LinkPrediction(self, digraph, edge):
-        pass
           
 if __name__ == "__main__":
     pass
