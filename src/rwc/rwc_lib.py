@@ -102,11 +102,12 @@ def deltaRwc(path, graph, a, data, edge):
     @param k2: number of nodes of community Y to consider, 
                ordered in decreasing order of degree
     @param dictioPol: polarization score of nodes ({node:polarization ...})
-    @return a tuple of two lists:
+    @return a tuple of two lists and two dictionaries:
             the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
             The list returned is ordered in increasing order of delta_of_rwc.
             the second is a list of tuples. Each tuple is of type (edge:acceptance_probability).
             The list returned is ordered in decreasing order of acceptance_probability.
+            The two dictionaries are the unsorted versions of the two lists.
 '''
 def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
     
@@ -138,27 +139,54 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data, dictioPol):
 
     dict_delta_sorted = sorted(dictio_delta.iteritems(), key=lambda (k,v):(v,k))
     dict_prob_sorted = sorted(dictio_prob.iteritems(), key=lambda (k,v):(v,k), reverse=True)
-    '''
-    count = 0
-    for i in range(0,len(dict_sorted)):
-        count += dict_sorted[i][1]
-    
-    print count
-    '''
-    return (dict_delta_sorted,dict_prob_sorted)
+
+    return (dict_delta_sorted,dictio_delta,dict_prob_sorted,dictio_prob)
 
 '''
-    @param sorted_delta: first element of tuple returned by deltaProbabOrdered
-    @param sorted_prob: second element of tuple returned by deltaProbabOrdered
+    @param data: tuple returned by deltaProbabOrdered
     @param k: number of edge to propose
+    @return the top k edges, whose scoring function is acceptance_probability*delta_rwc
+            Source: http://www.inf.unibz.it/dis/teaching/SDB/reports/report_mitterer.pdf
 '''
-def fagin(sorted_delta, sorted_prob, k):
+def fagin(data, k):
     
-    if k < 0 or len(sorted_delta) != len(sorted_prob):
+    if k < 0 or len(data[0]) != len(data[2]):
         return 
     
-    min_k = min(k,len(sorted_delta))
+    min_k = min(k,len(data[0]))
     
+    list_I = data[0]
+    list_P = data[2]
+    
+    dictio_I = data[1]
+    dictio_P = data[3]
+    
+    R = {}
+    threshold = list_I[0][1]*list_P[0][1] 
+    R.update({list_I[0][0]:list_I[0][1]*dictio_P[list_I[0][0]]})#random access
+    R.update({list_P[0][0]:list_P[0][1]*dictio_I[list_P[0][0]]})#random access
+    maxkey = max(R.keys(), key=(lambda k: R[k]))
+    i = 0
+    j = 0
+    bool = 0
+    
+    while threshold < R[maxkey]:
+        
+        if bool%2 == 0:
+            i += 1
+            R.update({list_I[i][0]:list_I[i][1]*dictio_P[list_I[i][0]]})#random access
+            
+        else:
+            j += 1
+            R.update({list_P[j][0]:list_P[j][1]*dictio_I[list_P[j][0]]})#random access
+    
+        threshold = list_I[i][1]*list_P[j][1]
+        maxkey = max(R.keys(), key=(lambda k: R[k]))
+        bool += 1
+        
+    sortedR = sorted(R.iteritems(), key=lambda (k,v):(v,k))
+    
+    return sortedR[0:k]
 
 if __name__ == '__main__':
     
@@ -168,9 +196,7 @@ if __name__ == '__main__':
     r = rwc(0.85, graphData)
     print "RWC score =%13.10f"%r #%width.precisionf
     
-    sorted = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData,dictioPol)
-    print len(sorted[0])#delta
-    print len(sorted[1])#prob
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData,dictioPol)
     
-    fagin(sorted[0],sorted[1],50)
-    
+    R = fagin(sorted_dp,5)
+    print R
