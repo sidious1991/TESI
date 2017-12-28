@@ -2,7 +2,6 @@ from __future__ import division
 import numpy as np
 import networkx as nx
 import utilities as ut
-from rwc.utilities import polarizationScore
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -154,6 +153,7 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data, type, dictioPol):
     @param data: tuple returned by deltaProbabOrdered
     @param k: number of edge to propose
     @return the top k edges, whose scoring function is EXPECTED DELTA_RWC (id est acceptance_probability*delta_rwc)
+            and aceptance_probability 
             Source: http://www.inf.unibz.it/dis/teaching/SDB/reports/report_mitterer.pdf
 '''
 def fagin(data, k):
@@ -193,8 +193,17 @@ def fagin(data, k):
         bool += 1
         
     sortedR = sorted(R.iteritems(), key=lambda (k,v):(v,k))
-     
-    return sortedR[0:k]
+    '''
+    i=0;
+    while i < len(sortedR):
+        sortedR[i]=(sortedR[i][0],(sortedR[i][1],dictio_P[sortedR[i][0]]))
+        i+=1
+    '''
+    probR = {}
+    for i in sortedR[0:k]:
+        probR.update({i[0]:(i[1],dictio_P[i[0]])})#(edge):(delta*prob,prob)
+    
+    return (sortedR,probR)
 
 
 if __name__ == '__main__':
@@ -207,30 +216,86 @@ if __name__ == '__main__':
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 0, dictioPol)
     
-    R = fagin(sorted_dp,5)
+    R = fagin(sorted_dp,30)
+    
+    
     print "Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : "
-    print R
+    print R[1]
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 1, dictioPol)
     
-    R = fagin(sorted_dp,5)
+    R1 = fagin(sorted_dp,30)
+    
     print "Expected Decrease RWC -- in_degree type : "
-    print R
+    print R1[1]
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 2, dictioPol)
     
-    R = fagin(sorted_dp,5)
+    R2 = fagin(sorted_dp,30)
+    
     print "Expected Decrease RWC -- ratio type : "
-    print R
+    print R2[1]
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 3, dictioPol)
     
-    R = fagin(sorted_dp,5)
+    R3 = fagin(sorted_dp,30)
+
     print "Expected Decrease RWC -- betweenness centrality intra-community type : "
-    print R
+    print R3[1]
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 4, dictioPol)
     
-    R = fagin(sorted_dp,5)
+    R4 = fagin(sorted_dp,30)
+    
     print "Expected Decrease RWC -- betweenness centrality : "
-    print R
+    print R4[1]
+    
+    print "-----------------------------------------------"
+    (new_graph,exp,ratio) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',None,R[1])
+    graphData = ut.computeData(None, new_graph, 40, 0.85)
+    dictioPol = ut.polarizationScore(None, new_graph, graphData)    
+    r1 = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r1 #%width.precisionf
+    print "Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : =%13.10f"%exp
+    print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+    
+    print "-----------------------------------------------"
+    (new_graph,exp,ratio) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',None,R1[1])
+    graphData = ut.computeData(None, new_graph, 40, 0.85)
+    dictioPol = ut.polarizationScore(None, new_graph, graphData)    
+    r1 = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r1 #%width.precisionf
+    print "Expected Decrease RWC -- in_degree type : =%13.10f"%exp
+    print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        
+    print "-----------------------------------------------"
+    (new_graph,exp,ratio) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',None,R2[1])
+    graphData = ut.computeData(None, new_graph, 40, 0.85)
+    dictioPol = ut.polarizationScore(None, new_graph, graphData)    
+    r1 = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r1 #%width.precisionf
+    print "Expected Decrease RWC -- ratio type : =%13.10f"%exp
+    print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        
+    print "-----------------------------------------------"
+    (new_graph,exp,ratio) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',None,R3[1])
+    graphData = ut.computeData(None, new_graph, 40, 0.85)
+    dictioPol = ut.polarizationScore(None, new_graph, graphData)    
+    r1 = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r1 #%width.precisionf
+    print "Expected Decrease RWC -- betweenness centrality intra-community type : =%13.10f"%exp
+    print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        
+    print "-----------------------------------------------"
+    (new_graph,exp,ratio) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',None,R4[1])
+    graphData = ut.computeData(None, new_graph, 40, 0.85)
+    dictioPol = ut.polarizationScore(None, new_graph, graphData)    
+    r1 = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r1 #%width.precisionf
+    print "Expected Decrease RWC -- betweenness centrality type : =%13.10f"%exp
+    print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        
+    
+    
+    
+    

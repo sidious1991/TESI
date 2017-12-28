@@ -6,7 +6,7 @@ import scipy as sp
 import numpy as np
 from scipy import linalg
 import math
-from Cython.Plex.Regexps import SwitchCase
+import random
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -151,6 +151,34 @@ def computeData(path, graph, k, a):
     
     return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,sorted_x,sorted_y)
     
+
+
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param dictio: is the dictio which contains new edges to add with its delta_RWC and acceptance probability
+    @return new graph,expected delta RWC and ratio of accepted edges/proposed edges
+
+'''
+def addEdgeToGraph(path, graph, dictio):
+    
+    if path is None and graph is None:
+        return ()
+        
+    g = nx.read_gpickle(path) if path is not None else graph
+    
+    delta=0
+    count=0
+    for i in dictio:
+        #print i,i[0],i[1],dictio[i]
+        c=random.random()
+        delta+=dictio[i][0]
+        if c <= dictio[i][1]:
+            g.add_edge(i[0],i[1])
+            count +=1
+        
+    return (g,-delta,count/len(dictio))
+
     
 '''
     @param path: is the path to diGraph (if not None)
