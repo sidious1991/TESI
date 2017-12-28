@@ -208,17 +208,29 @@ if __name__ == '__main__':
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 0, dictioPol)
     
     R = fagin(sorted_dp,5)
-    print "Expected Decrease -- degree type : "
+    print "Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : "
     print R
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 1, dictioPol)
     
     R = fagin(sorted_dp,5)
-    print "Expected Decrease -- in_degree type : "
+    print "Expected Decrease RWC -- in_degree type : "
     print R
     
     sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 2, dictioPol)
     
     R = fagin(sorted_dp,5)
-    print "Expected Decrease -- ratio type : "
+    print "Expected Decrease RWC -- ratio type : "
+    print R
+    
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 3, dictioPol)
+    
+    R = fagin(sorted_dp,5)
+    print "Expected Decrease RWC -- betweenness centrality intra-community type : "
+    print R
+    
+    sorted_dp = deltaProbabOrdered('../../outcomes/parted_graph.pickle', None, 0.85, 10, 10, graphData, 4, dictioPol)
+    
+    R = fagin(sorted_dp,5)
+    print "Expected Decrease RWC -- betweenness centrality : "
     print R

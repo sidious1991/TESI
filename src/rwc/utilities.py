@@ -15,8 +15,10 @@ from Cython.Plex.Regexps import SwitchCase
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param type: if 1 nodes of each community ordered by in_degree,
-                 else nodes of each community ordered by ratio in_degree/degree_tot
+    @param type: if 1: nodes of each community ordered by in_degree,
+                 elif 2: nodes of each community ordered by ratio in_degree/degree_tot
+                 elif 3: nodes of each community ordered by betweenness centrality (computed separately for each community)
+                 else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
 '''
 def sortNodes(path, graph, type):
     
@@ -37,21 +39,43 @@ def sortNodes(path, graph, type):
             comms[key].append(node)
         else:
             comms.update({key:[node]})
-            
+    
+    #in_degree     
     if type == 1:
         
         degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
         degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
     
-    else:
+        sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+        sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    
+    #ratio
+    elif type == 2:
         for i in comms[0]:
             degrees_x.append((i,g.in_degree(i)/g.degree(i)))
             
         for j in comms[1]:
             degrees_y.append((j,g.in_degree(j)/g.degree(j)))
+            
+        sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+        sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
     
-    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    #betweenness centrality
+    elif type == 3:
+        centrality_x = nx.betweenness_centrality_subset(g, comms[0], comms[0], normalized=True)
+        centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[1], normalized=True)
+    
+        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
+        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
+        
+    #betweenness centrality (destination nodes of the whole graph)
+    else:
+        centrality_x = nx.betweenness_centrality_subset(g, comms[0], g.nodes(), normalized=True)
+        centrality_y = nx.betweenness_centrality_subset(g, comms[1], g.nodes(), normalized=True)
+    
+        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
+        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
+
 
     return (sorted_x,sorted_y)
 
@@ -287,7 +311,7 @@ if __name__ == '__main__':
     pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
     print pol
     
-    tuple = sortNodes('../../outcomes/parted_graph.pickle', None, 2)
+    tuple = sortNodes('../../outcomes/parted_graph.pickle', None, 4)
     print tuple[0]
     print tuple[1]
     
