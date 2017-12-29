@@ -156,7 +156,7 @@ def computeData(path, graph, k, a):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
-    @param dictio: is the dictio which contains new edges to add with its delta_RWC and acceptance probability
+    @param dictio: is the dictio which contains new edges to add with its expected_delta_RWC and acceptance probability
     @return new graph,expected delta RWC and ratio of accepted edges/proposed edges
 
 '''
@@ -171,8 +171,10 @@ def addEdgeToGraph(path, graph, dictio):
     count=0
     for i in dictio:
         #print i,i[0],i[1],dictio[i]
-        c=random.random()
+        #continue uniform distribution in interval [0,1)
+        c=np.random.uniform()
         delta+=dictio[i][0]
+        #check acceptance probability
         if c <= dictio[i][1]:
             g.add_edge(i[0],i[1])
             count +=1
@@ -342,4 +344,6 @@ if __name__ == '__main__':
     tuple = sortNodes('../../outcomes/parted_graph.pickle', None, 4)
     print tuple[0]
     print tuple[1]
+    
+    
     
