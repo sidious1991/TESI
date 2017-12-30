@@ -17,7 +17,6 @@ import random
     @param graph: is a diGraph (if not None)
     @param type: if 1: nodes of each community ordered by in_degree,
                  elif 2: nodes of each community ordered by ratio in_degree/degree_tot
-                 elif 3: nodes of each community ordered by betweenness centrality (computed separately for each community)
                  else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
 '''
 def sortNodes(path, graph, type):
@@ -59,14 +58,6 @@ def sortNodes(path, graph, type):
             
         sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
         sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
-    
-    #betweenness centrality
-    elif type == 3:
-        centrality_x = nx.betweenness_centrality_subset(g, comms[0], comms[0], normalized=True)
-        centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[1], normalized=True)
-    
-        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
-        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
         
     #betweenness centrality (destination nodes of the whole graph)
     else:
@@ -155,31 +146,32 @@ def computeData(path, graph, k, a):
 
 '''
     @param path: is the path to diGraph (if not None)
-    @param graph: is a diGraph (if not None) 
     @param dictio: is the dictio which contains new edges to add with its expected_delta_RWC and acceptance probability
-    @return new graph,expected delta RWC and ratio of accepted edges/proposed edges
+    @return new graph,expected delta RWC,ratio of accepted edges/proposed edges,maximum expected delta RWC
 
 '''
-def addEdgeToGraph(path, graph, dictio):
+def addEdgeToGraph(path, dictio):
     
-    if path is None and graph is None:
+    if path is None:
         return ()
         
-    g = nx.read_gpickle(path) if path is not None else graph
+    g = nx.read_gpickle(path)
     
     delta=0
+    max_delta = 0 # maximum expected delta
     count=0
     for i in dictio:
         #print i,i[0],i[1],dictio[i]
         #continue uniform distribution in interval [0,1)
         c=np.random.uniform()
         delta+=dictio[i][0]
+        max_delta = min(max_delta,dictio[i][0])
         #check acceptance probability
         if c <= dictio[i][1]:
             g.add_edge(i[0],i[1])
             count +=1
         
-    return (g,-delta,count/len(dictio))
+    return (g,-delta,count/len(dictio),-max_delta)
 
     
 '''
@@ -229,6 +221,45 @@ def acceptanceProbability(pscores):
     return prob
 
 
+'''
+    @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None) 
+    @param edge: directed edge to recommend (tuple: (to,from))
+    @param data: tuple returned by computeData
+    @return acceptance probability of the directed edge proposed
+
+    Source (adapted version of):
+    Balancing information exposure in social networks 
+    Garimella, Parotsidis et alii
+    
+    Acceptance Probability, not based on polarization score
+'''
+def acceptanceProbabilityGP(path, graph, edge, data):
+    
+    if path is None and graph is None:
+        return
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+    
+    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data
+
+    alpha = 0.5 #look at the paper
+    r_u = g.out_degree(edge[0]) # to adjust ... It is the total number of retweets of user u
+    comm_v = part[edge[1]] # to which community the destination node v belongs
+    
+    count_comm_v = 0 # to adjust ... number of neighbors of u which belongs to comm_v 
+    
+    for node in g[edge[0]].keys():
+        if part[node]==comm_v:
+            count_comm_v += 1
+    
+    q_u = count_comm_v/r_u # a priori probability of a user u retweeting comm_v
+    
+    #r_u_v must be 0 in our case (we are proposing inexistent edge)...
+    
+    return alpha*q_u + (1-alpha)*(1/(r_u+2))
+    
+    
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
@@ -345,5 +376,6 @@ if __name__ == '__main__':
     print tuple[0]
     print tuple[1]
     
-    
+    p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
+    print p
     
