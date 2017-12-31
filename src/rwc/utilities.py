@@ -1,12 +1,9 @@
 from __future__ import division
 import networkx as nx
-import matplotlib.pyplot as plt
 import community
-import scipy as sp
 import numpy as np
 from scipy import linalg
 import math
-import random
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -366,7 +363,7 @@ def polarizationScore(path, graph, data):
     return dictio_polarization[iter-1]
 
 if __name__ == '__main__':
-    
+    '''
     graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
     
     pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
@@ -378,4 +375,4 @@ if __name__ == '__main__':
     
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
-    
+    '''    

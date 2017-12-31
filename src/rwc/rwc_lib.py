@@ -190,11 +190,11 @@ def fagin(data, k):
     maxkey = max(R.keys(), key=(lambda k: R[k]))
     i = 0
     j = 0
-    bool = 0
+    counter = 0
     
     while threshold < R[maxkey]:
         
-        if bool%2 == 0:
+        if counter%2 == 0:
             i += 1
             R.update({list_I[i][0]:list_I[i][1]*dictio_P[list_I[i][0]]})#random access
             
@@ -204,7 +204,7 @@ def fagin(data, k):
     
         threshold = list_I[i][1]*list_P[j][1]
         maxkey = max(R.keys(), key=(lambda k: R[k]))
-        bool += 1
+        counter += 1
         
     sortedR = sorted(R.iteritems(), key=lambda (k,v):(v,k))
     '''
@@ -214,10 +214,10 @@ def fagin(data, k):
         i+=1
     '''
     probR = {}
-    for i in sortedR[0:k]:
+    for i in sortedR[0:min_k]:
         probR.update({i[0]:(i[1],dictio_P[i[0]])})#(edge):(delta*prob,prob)
     
-    return (sortedR,probR)
+    return (sortedR[0:min_k],probR)
 
 
 if __name__ == '__main__':
@@ -250,7 +250,7 @@ if __name__ == '__main__':
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
         print comment[i],"%13.10f"%exp
         print "Maximum Expected Decrease RWC : =%13.10f"%max_exp
-        print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
         print "-----------------------------------------------"
     
     print "---------------------------------------------------------------------------------------------------------------------------"
@@ -278,5 +278,5 @@ if __name__ == '__main__':
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
         print comment[i],"%13.10f"%exp
         print "Maximum Expected Decrease RWC : =%13.10f"%max_exp
-        print "Delta TOT =%13.10f"%(r-r1), " aceptance_ratio :",ratio
+        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
         print "-----------------------------------------------"
