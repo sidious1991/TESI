@@ -1,8 +1,10 @@
 import tweepy
 from rwc import utilities
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from bsddb.dbshelve import HIGHEST_PROTOCOL
+
 
 auth = tweepy.OAuthHandler("", "")
 auth.set_access_token("", "")
@@ -26,12 +28,11 @@ if __name__ == '__main__':
     
     print 'done'
     '''
-    
+    '''
     G = nx.random_partition_graph([80,80],.30,.001, directed=True)
     
     nx.write_gpickle(G, '../outcomes/parted_graph.pickle', protocol=HIGHEST_PROTOCOL)
     
     nx.draw(G)
     plt.show()
-    
-    
+    ''' 

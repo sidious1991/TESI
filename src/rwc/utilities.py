@@ -1,9 +1,11 @@
 from __future__ import division
 import networkx as nx
-import community
 import numpy as np
-from scipy import linalg
 import math
+from scipy import linalg
+from networkx.algorithms.community.asyn_fluidc import asyn_fluidc
+from networkx.algorithms.community.centrality import girvan_newman
+from networkx.classes.function import common_neighbors
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -12,32 +14,26 @@ import math
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param type: if 1: nodes of each community ordered by in_degree,
-                 elif 2: nodes of each community ordered by ratio in_degree/degree_tot
-                 else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
+    @param comms: are the communities found by asyn_fluidc in computeData
+    @param part: is the partition of the nodes found by asyn_fluidc in computeData
+    @param type_sorting: if 1: nodes of each community ordered by in_degree,
+                         elif 2: nodes of each community ordered by ratio in_degree/degree_tot
+                         else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
 '''
-def sortNodes(path, graph, type):
+def sortNodes(path, graph, comms, partition, type_sorting):
     
     if path is None and graph is None:
         return ()
     
     g = nx.read_gpickle(path) if path is not None else graph
     
-    comms = {}
     degrees_x = []
     degrees_y = []
-    
-    partition = community.best_partition(g.to_undirected())
-    
-    for node in partition.keys():
-        key = partition[node]
-        if comms.has_key(key):
-            comms[key].append(node)
-        else:
-            comms.update({key:[node]})
+    sorted_x = []
+    sorted_y = []
     
     #in_degree     
-    if type == 1:
+    if type_sorting == 1:
         
         degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
         degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
@@ -46,7 +42,7 @@ def sortNodes(path, graph, type):
         sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
     
     #ratio
-    elif type == 2:
+    elif type_sorting == 2:
         for i in comms[0]:
             degrees_x.append((i,g.in_degree(i)/g.degree(i)))
             
@@ -64,9 +60,7 @@ def sortNodes(path, graph, type):
         sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
         sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
 
-
-    return (sorted_x,sorted_y)
-
+    return (sorted_x, sorted_y)
 
 '''
     @param path: is the path to diGraph (if not None)
@@ -74,7 +68,7 @@ def sortNodes(path, graph, type):
     @param k: is the number of the 'high-degree vertices' to consider in each community
     @param a: is the dumping parameter (probability to continue)
     @return the communities of the graph, the personalization vectors for the communities,
-            the c_x and c_y vectors, the partition and mats_x, mats_y tuples from M method,
+            the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
             the sorted_x and sorted_y nodes of communities (by degree)
 '''
 def computeData(path, graph, k, a):
@@ -85,16 +79,18 @@ def computeData(path, graph, k, a):
     g = nx.read_gpickle(path) if path is not None else graph
     
     comms = {}
+    partition = {}
+    i = 0
     
-    partition = community.best_partition(g.to_undirected())
+    fluidc_comm = asyn_fluidc(nx.to_undirected(g),2)
     
-    for node in partition.keys():
-        key = partition[node]
-        if comms.has_key(key):
-            comms[key].append(node)
-        else:
-            comms.update({key:[node]})
-            
+    for comm in fluidc_comm:
+        list_comm = list(comm)
+        comms.update({i : list_comm})
+        for node in list_comm:
+            partition.update({node : i})
+        i += 1
+ 
     num_x = len(comms[0])
     num_y = len(comms[1])
     p_x = 1/num_x
@@ -115,13 +111,13 @@ def computeData(path, graph, k, a):
     c_x = []
     c_y = []
     
-    degrees = g.degree(g.nodes().keys())
-    
+    degrees = g.degree(g.nodes())
+        
     degrees_x = g.degree(comms[0]) #comm X -- to be ordered
     degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
-        
+           
     sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)  
     
     #inizialization
     for i in range(0,len(degrees)):
@@ -140,14 +136,13 @@ def computeData(path, graph, k, a):
     return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,sorted_x,sorted_y)
     
 
-
 '''
     @param path: is the path to diGraph (if not None)
-    @param dictio: is the dictio which contains new edges to add with its expected_delta_RWC and acceptance probability
+    @param l: is the list which contains new edges to add with their expected_delta_RWC and acceptance probability
     @return new graph,expected delta RWC,ratio of accepted edges/proposed edges,maximum expected delta RWC
 
 '''
-def addEdgeToGraph(path, dictio):
+def addEdgeToGraph(path, l):
     
     if path is None:
         return ()
@@ -157,18 +152,18 @@ def addEdgeToGraph(path, dictio):
     delta=0
     max_delta = 0 # maximum expected delta
     count=0
-    for i in dictio:
-        #print i,i[0],i[1],dictio[i]
+    for i in l:
+        #print i,i[0],i[1],l[i]
         #continue uniform distribution in interval [0,1)
         c=np.random.uniform()
-        delta+=dictio[i][0]
-        max_delta = min(max_delta,dictio[i][0])
+        delta+=l[i][0]
+        max_delta = min(max_delta,l[i][0])
         #check acceptance probability
-        if c <= dictio[i][1]:
+        if c <= l[i][1]:
             g.add_edge(i[0],i[1])
             count +=1
         
-    return (g,-delta,count/len(dictio),-max_delta)
+    return (g,-delta,count/len(l),-max_delta)
 
     
 '''
@@ -176,7 +171,7 @@ def addEdgeToGraph(path, dictio):
     @param graph: is a diGraph (if not None) 
     @param a: is the dumping parameter (probability to continue)
     @param personal: is the restart vector
-    @return the M_x or M_y matrix inverted (source Garimella et alii), depending on the restart vector (personal)
+    @return the M_x or M_y matrix inverted (source Garimella et alii), depending on the restart vector (personal),
             and P_x or P_y matrix
 '''
 def M(path, graph, a, personal):
@@ -200,24 +195,28 @@ def M(path, graph, a, personal):
     
     
 '''
-    @param pscores: is a tuple identifying the polarity scores of a directed edge (from,to).
-    @return the acceptance probability of the directed edge (from,to).
-            The probability is based on the dipole and work concepts.
-    future: total_acceptance_probability = alpha*P(work,dipole)+beta*P_other(other_factors)
-            alpha + beta = 1
-'''
-def acceptanceProbability(pscores):
+    @param g: the graph to consider
+    @param edge: the edge to predict
+    @return the 'Adamic Adar' index for the predicted edge
+'''    
+def AdamicAdarIndex(g, edge):  
     
-    fromp = pscores[0]
-    top = pscores[1]
+    if g is None or edge is None:
+        return
+  
+    g_undirect = nx.to_undirected(g)
     
-    work = -np.exp(-(top))+np.exp(-(fromp)) if (fromp <= top) else np.exp(fromp)-np.exp(top)
+    source = edge[0]
+    dest = edge[1]
+    common = nx.common_neighbors(g_undirect, source, dest)
     
-    prob = np.exp(-work)
+    index = 0.0
     
-    return prob
-
-
+    for neigh in common:
+        index += 1/math.log(g_undirect.degree(neigh), 10)
+    
+    return index
+    
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
@@ -231,6 +230,7 @@ def acceptanceProbability(pscores):
     
     Acceptance Probability, not based on polarization score
 '''
+'''
 def acceptanceProbabilityGP(path, graph, edge, data):
     
     if path is None and graph is None:
@@ -242,6 +242,8 @@ def acceptanceProbabilityGP(path, graph, edge, data):
 
     alpha = 0.5 #look at the paper
     r_u = g.out_degree(edge[0]) # to adjust ... It is the total number of retweets of user u
+    if r_u == 0:
+        r_u += 1
     comm_v = part[edge[1]] # to which community the destination node v belongs
     
     count_comm_v = 0 # to adjust ... number of neighbors of u which belongs to comm_v 
@@ -256,7 +258,26 @@ def acceptanceProbabilityGP(path, graph, edge, data):
     
     return alpha*q_u + (1-alpha)*(1/(r_u+2))
     
+'''   
+'''
+    @param pscores: is a tuple identifying the polarity scores of a directed edge (from,to).
+    @return the acceptance probability of the directed edge (from,to).
+            The probability is based on the dipole and work concepts.
+    future: total_acceptance_probability = alpha*P(work,dipole)+beta*P_other(other_factors)
+            alpha + beta = 1
+'''
+'''
+def acceptanceProbability(pscores):
     
+    fromp = pscores[0]
+    top = pscores[1]
+    
+    work = -np.exp(-(top))+np.exp(-(fromp)) if (fromp <= top) else np.exp(fromp)-np.exp(top)
+    
+    prob = np.exp(-work)
+    
+    return prob
+''' 
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
@@ -270,6 +291,7 @@ def acceptanceProbabilityGP(path, graph, edge, data):
             ETSI Agronomos, 28040, Madrid, Spain
             
             This algorithm is based on LABEL-PROPAGATION
+'''
 '''
 def polarizationScore(path, graph, data):
     
@@ -292,9 +314,11 @@ def polarizationScore(path, graph, data):
     ratio_y = {}
     
     for i in comms[0]:
+        print i
         ratio_x.update({i:g.in_degree(i)/g.degree(i)})
     
     for i in comms[1]:
+        print i
         ratio_y.update({i:g.in_degree(i)/g.degree(i)})
         
     ratio_x_ordered = sorted(ratio_x.iteritems(), key=lambda (k,v):(v,k), reverse=True)
@@ -361,7 +385,7 @@ def polarizationScore(path, graph, data):
         iter += 1
     
     return dictio_polarization[iter-1]
-
+'''
 if __name__ == '__main__':
     '''
     graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
@@ -376,3 +400,13 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
+    '''
+    eg = EndorsementGraph('retweet_graph_beefban')
+    g = eg.buildEGraph()
+    print g.edges(data = False)
+    print len(g.edges())
+    print g.nodes(data = False)
+    print len(g.nodes)
+    nx.draw(g)
+    plt.show()
+    '''

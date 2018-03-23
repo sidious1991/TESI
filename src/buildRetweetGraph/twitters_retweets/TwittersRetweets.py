@@ -51,6 +51,7 @@ class TwittersRetweets:
     @return: dictioTwitters, that is a dictionary like {username:{tweetcount:..},username:{tweetcount:..}...},
              of users who tweeted about the query and in the observation period specified.
     '''
+    '''
     def computeTwitters(self):
         
         tweetCriteria = got.manager.TweetCriteria().setSince(self.__since).setUntil(self.__until).setQuerySearch(self.__query)
@@ -79,10 +80,13 @@ class TwittersRetweets:
             pickle.dump(dictioRetweets, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         return dictioTwitters
-    
+    '''
     '''
     @return: dictioRetweets, that is a dictionary like {(retweetuser,tweetuser):{retweetprob:..},...},
              of retweets about the query.
+             
+             Probability bugged !!!
+    '''
     '''
     def computeRetweets(self):
         
@@ -135,6 +139,6 @@ class TwittersRetweets:
         #tweets list is unchanged
      
         return dictioRetweets
-        
+    '''
 if __name__ == '__main__':
     pass

@@ -18,10 +18,14 @@ def rwc(a, data):
     (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data    
     
     sub_c = np.subtract(c_x,c_y)
+    sub_c_alpha = np.dot(sub_c,(1-a))
     
-    sub_m = np.subtract(np.dot(mats_x[0],e_x.values()),np.dot(mats_y[0],e_y.values()))
+    m_e_x = np.dot(mats_x[0],list(e_x.values()))
+    m_e_y = np.dot(mats_y[0],list(e_y.values()))
+    
+    sub_m = np.subtract(m_e_x, m_e_y)
    
-    rwc_m = np.dot(np.dot(sub_c,(1-a)),sub_m)
+    rwc_m = np.dot(sub_c_alpha,sub_m)
     
     return rwc_m
    
@@ -64,8 +68,8 @@ def deltaRwc(path, graph, a, data, edge):
     z_y = np.zeros(len(g.nodes()))
     
     if dangling:
-        z_x = np.subtract(e_x,v)
-        z_y = np.subtract(e_y,v)
+        z_x = np.subtract(list(e_x.values()),v)
+        z_y = np.subtract(list(e_y.values()),v)
         
     else:
         z_x = np.dot(1/(q+1),source_row)
@@ -82,8 +86,8 @@ def deltaRwc(path, graph, a, data, edge):
     num_x = np.dot(mx_z,u_mx)
     num_y = np.dot(my_z,u_my)
     
-    x_factor = np.dot((num_x/den_x),e_x.values())#vector 
-    y_factor = np.dot((num_y/den_y),e_y.values())#vector
+    x_factor = np.dot((num_x/den_x),list(e_x.values()))#vector 
+    y_factor = np.dot((num_y/den_y),list(e_y.values()))#vector
     
     ''' Sherman-Morrison Formula '''
     
@@ -97,13 +101,15 @@ def deltaRwc(path, graph, a, data, edge):
     @param graph: is a diGraph (if not None)
     @param a: is the dumping parameter (probability to continue)
     @param k1: number of nodes of community X to consider, 
-               ordered in decreasing order of degree
+               ordered depending on type t
     @param k2: number of nodes of community Y to consider, 
-               ordered in decreasing order of degree
-    @param dictioPol: polarization score of nodes ({node:polarization ...})
-    @param type: if 0 nodes of each community ordered by degree_tot,
+               ordered depending on type t
+    @param data: data computed by computeData in utilities module
+    @param t: if 0 nodes of each community ordered by degree_tot,
                  elif 1 nodes of each community ordered by in_degree,
-                 else nodes of each community ordered by ratio in_degree/degree_tot
+                 elif 2 nodes of each community ordered by ratio in_degree/degree_tot
+                 else nodes of each community ordered by betweenness centrality
+    @param dictioPol: polarization score of nodes ({node:polarization ...})
     @return a tuple of two lists and two dictionaries:
             the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
             The list returned is ordered in increasing order of delta_of_rwc.
@@ -111,55 +117,45 @@ def deltaRwc(path, graph, a, data, edge):
             The list returned is ordered in decreasing order of acceptance_probability.
             The two dictionaries are the unsorted versions of the two lists.
 '''
-def deltaProbabOrdered(path, graph, a, k1, k2, data, type, dictioPol):
+def deltaProbabOrdered(path, graph, a, k1, k2, data, t, dictioPol):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
+    sorted_x = data[8]
+    sorted_y = data[9]
     
-    if type == 0:
-        sorted_x = data[8]
-        sorted_y = data[9]
-    else:
-        (sorted_x,sorted_y) = ut.sortNodes(None, g, type)
-    
+    if t > 0:
+        sorted_x, sorted_y = ut.sortNodes(None, g, data[6], data[7], t)
+     
     min_k1 = min(k1,len(sorted_x))
     min_k2 = min(k2,len(sorted_y))
 
     dictio_delta = {}
     dictio_prob = {}
+    prob = 0.0
     
     adj_mat = np.array(nx.attr_matrix(g)[0])
     
     if dictioPol is not None:
+        return ()
     
-        for i in range(0,min_k1):
-            for j in range(0,min_k2):
-                if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
-                    e = (sorted_x[i][0],sorted_y[j][0])
-                    dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_prob.update({e : ut.acceptanceProbability((dictioPol[sorted_x[i][0]],dictioPol[sorted_y[j][0]]))})
-                if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
-                    e = (sorted_y[j][0],sorted_x[i][0])
-                    dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_prob.update({e : ut.acceptanceProbability((dictioPol[sorted_y[j][0]],dictioPol[sorted_x[i][0]]))})
     else:
-
         for i in range(0,min_k1):
             for j in range(0,min_k2):
                 if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
                     e = (sorted_x[i][0],sorted_y[j][0])
                     dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_prob.update({e : ut.acceptanceProbabilityGP(None, g, e, data)})
+                    dictio_prob.update({e : ut.AdamicAdarIndex(g, e)})
                 if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
                     e = (sorted_y[j][0],sorted_x[i][0])
                     dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_prob.update({e : ut.acceptanceProbabilityGP(None, g, e, data)})
+                    dictio_prob.update({e : ut.AdamicAdarIndex(g, e)})
 
     dict_delta_sorted = sorted(dictio_delta.iteritems(), key=lambda (k,v):(v,k))
     dict_prob_sorted = sorted(dictio_prob.iteritems(), key=lambda (k,v):(v,k), reverse=True)
-
+            
     return (dict_delta_sorted,dictio_delta,dict_prob_sorted,dictio_prob)
 
 
@@ -167,7 +163,7 @@ def deltaProbabOrdered(path, graph, a, k1, k2, data, type, dictioPol):
     @param data: tuple returned by deltaProbabOrdered
     @param k: number of edge to propose
     @return the top k edges, whose scoring function is EXPECTED DELTA_RWC (id est acceptance_probability*delta_rwc)
-            and aceptance_probability 
+            and acceptance_probability 
             Source: http://www.inf.unibz.it/dis/teaching/SDB/reports/report_mitterer.pdf
 '''
 def fagin(data, k):
@@ -196,10 +192,14 @@ def fagin(data, k):
         
         if counter%2 == 0:
             i += 1
+            if i >= min_k:
+                break
             R.update({list_I[i][0]:list_I[i][1]*dictio_P[list_I[i][0]]})#random access
             
         else:
             j += 1
+            if j >= min_k:
+                break
             R.update({list_P[j][0]:list_P[j][1]*dictio_I[list_P[j][0]]})#random access
     
         threshold = list_I[i][1]*list_P[j][1]
@@ -213,6 +213,7 @@ def fagin(data, k):
         sortedR[i]=(sortedR[i][0],(sortedR[i][1],dictio_P[sortedR[i][0]]))
         i+=1
     '''
+    print sortedR # sorted list of : [((node_from, node_to),ExpectedDeltaRwc), ((node_from, node_to),ExpectedDeltaRwc),...]
     probR = {}
     for i in sortedR[0:min_k]:
         probR.update({i[0]:(i[1],dictio_P[i[0]])})#(edge):(delta*prob,prob)
@@ -222,61 +223,34 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    graphData = ut.computeData('../../outcomes/retweet_graph_beefban.pickle', None, 1000, 0.85)
+    
+    g = nx.read_gpickle('../../outcomes/retweet_graph_beefban.pickle')
+    
+    print "---------------------------------------------------------------------------------------------------------------------------"
+    
+    r = rwc(0.85, graphData)
+    print "RWC score =%13.10f"%r #%width.precisionf
+    print "---------------------------------------------------------------------------------------------------------------------------"
+    R = []
+    comment = ["Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Expected Decrease RWC -- in_degree type : ","Expected Decrease RWC -- ratio type : ","Expected Decrease RWC -- betweenness centrality : "]
+    
+    for i in range(0,4):
+        
+        sorted_dp = deltaProbabOrdered(None, g, 0.85, 40, 40, graphData, i, None)
+    
+        R.append(fagin(sorted_dp,20))
+        
+        print comment[i]
+        print R[i][1]
+        
+        (new_graph,exp,ratio,max_exp) = ut.addEdgeToGraph('../../outcomes/retweet_graph_beefban.pickle',R[i][1])
+        mygraphData = ut.computeData(None, new_graph, 1000, 0.85)   
+        r1 = rwc(0.85, mygraphData)
+        print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
+        print comment[i],"%13.10f"%exp
+        print "Maximum Expected Decrease RWC : =%13.10f"%max_exp
+        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
+        print "-----------------------------------------------"
       
-    g = nx.read_gpickle('../../outcomes/parted_graph.pickle')
-    
-    print "---------------------------------------------------------------------------------------------------------------------------"
-    print "Acceptance probability that does not depend on polarization score:"
-    
-    r = rwc(0.85, graphData)
-    print "RWC score =%13.10f"%r #%width.precisionf
-    print "---------------------------------------------------------------------------------------------------------------------------"
-    R = []
-    comment = ["Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Expected Decrease RWC -- in_degree type : ","Expected Decrease RWC -- ratio type : ","Expected Decrease RWC -- betweenness centrality : "]
-    
-    for i in range(0,4):
-        
-        sorted_dp = deltaProbabOrdered(None, g, 0.85, 20, 20, graphData, i, None)
-    
-        R.append(fagin(sorted_dp,30))
-    
-        print comment[i]
-        print R[i][1]
-        
-        (new_graph,exp,ratio,max_exp) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 40, 0.85)   
-        r1 = rwc(0.85, mygraphData)
-        print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
-        print comment[i],"%13.10f"%exp
-        print "Maximum Expected Decrease RWC : =%13.10f"%max_exp
-        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
-        print "-----------------------------------------------"
-    
-    print "---------------------------------------------------------------------------------------------------------------------------"
-    print "Acceptance probability that depends on polarization score:"
-    
-    dictioPol = ut.polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
-    r = rwc(0.85, graphData)
-    print "RWC score =%13.10f"%r #%width.precisionf
-    print "---------------------------------------------------------------------------------------------------------------------------"
-    R = []
-    comment = ["Expected Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Expected Decrease RWC -- in_degree type : ","Expected Decrease RWC -- ratio type : ","Expected Decrease RWC -- betweenness centrality : "]
-    
-    for i in range(0,4):
-        
-        sorted_dp = deltaProbabOrdered(None, g, 0.85, 20, 20, graphData, i, dictioPol)
-    
-        R.append(fagin(sorted_dp,30))
-    
-        print comment[i]
-        print R[i][1]
-        
-        (new_graph,exp,ratio,max_exp) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 40, 0.85)   
-        r1 = rwc(0.85, mygraphData)
-        print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
-        print comment[i],"%13.10f"%exp
-        print "Maximum Expected Decrease RWC : =%13.10f"%max_exp
-        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
-        print "-----------------------------------------------"
+    print "-------------------------------------------------End of simulation---------------------------------------------------------"  

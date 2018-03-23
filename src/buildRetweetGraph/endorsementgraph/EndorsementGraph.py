@@ -1,3 +1,4 @@
+from __future__ import division
 import networkx as nx
 import nxmetis
 import matplotlib.pyplot as plt
@@ -5,6 +6,61 @@ import pickle
 
 class EndorsementGraph:
     
+    def __init__(self, inputname):
+        self.__inputname = inputname
+
+    def setInputName(self, inputname):
+        self.__inputname = inputname
+        
+    def getInputName(self):
+        return self.__inputname
+    
+    def buildEGraph(self):
+        inputname = self.getInputName()
+        digraph = nx.DiGraph(inputname = inputname)
+        
+        current_val = 0
+        dictio_nodes_convert = {} # node : num_val (key : value)
+        dictio_nodes = {} # node : totalretweetcount (key : value)
+        dictio_edges = {} # (source, dest) : retweetcount (key : value)
+        
+        #Build digraph read from file and write back pickled
+        with open ('../../inputs/'+inputname+'.txt') as f:
+            for line in f:
+                l = line.split(',')
+                source = l[0]
+                dest = l[1]
+                rtwcnt = float(l[2].rstrip('\n'))
+                                
+                if dictio_nodes.has_key(source):
+                    dictio_nodes[source] += rtwcnt
+                
+                else:
+                    dictio_nodes.update({source : rtwcnt})
+                    dictio_nodes_convert.update({source : current_val})
+                    current_val += 1
+                
+                if not dictio_nodes.has_key(dest):
+                    dictio_nodes.update({dest : 0})
+                    dictio_nodes_convert.update({dest : current_val})
+                    current_val += 1
+                
+                dictio_edges.update({(source, dest) : rtwcnt})
+    
+            #Set nodes of the endorsement graph
+            for key in dictio_nodes.keys():
+                digraph.add_node(dictio_nodes_convert[key], totalretweetcount = dictio_nodes[key])
+                
+            #Set edges of the endorsement graph
+            for key in dictio_edges.keys():
+                digraph.add_edge(dictio_nodes_convert[key[0]], dictio_nodes_convert[key[1]], prob = dictio_edges[key]/dictio_nodes[key[0]])
+                
+        #serialization
+        nx.write_gpickle(digraph, '../../outcomes/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
+        
+        return digraph
+    
+    '''
     def __init__(self, twrtw):
         self.__twrtw = twrtw
         self.__graphfilepath = '../outcomes/'+twrtw.getQuery()+'#digraph.pickle' #default path
@@ -16,10 +72,13 @@ class EndorsementGraph:
     def setTwrRtw(self, twrtw):
         self.__twrtw = twrtw
         return self
-    
+    '''
     '''
     @return: a digraph representing the endorsement graph about the query in the observation period
              specified in self.__twrtw. The digraph is serialized by pickle.
+             
+             Based on bugged code!!! (computeRetweets)
+    '''
     '''
     def buildEGraph(self):
         
@@ -45,7 +104,10 @@ class EndorsementGraph:
         nx.write_gpickle(digraph, self.__graphfilepath, protocol=pickle.HIGHEST_PROTOCOL)
         
         return digraph
-    
+    '''
           
 if __name__ == "__main__":
     pass
+    
+    
+    
