@@ -222,9 +222,9 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
+    graphData = ut.computeData('../../outcomes/retweet_graph_beefban.pickle', None, 500, 0.85)
     
-    g = nx.read_gpickle('../../outcomes/parted_graph.pickle')
+    g = nx.read_gpickle('../../outcomes/retweet_graph_beefban.pickle')
     
     print "---------------------------------------------------------------------------------------------------------------------------"
     
@@ -236,15 +236,15 @@ if __name__ == '__main__':
     
     for i in range(0,4):
         
-        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 20, 20, graphData, i)
+        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 90, 60, graphData, i)
     
-        R.append(fagin(sorted_dp,20))
+        R.append(fagin(sorted_dp,10))
         
         print comment[i]
         print R[i][1]
         
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 40, 0.85, old_part=graphData[6])     
+        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_beefban.pickle',R[i][1])
+        mygraphData = ut.computeData(None, new_graph, 500, 0.85)     
         r1 = rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
         print comment[i],"%13.10f"%opt

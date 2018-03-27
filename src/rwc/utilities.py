@@ -2,11 +2,9 @@ from __future__ import division
 import networkx as nx
 import numpy as np
 import math
+import itertools
 from scipy import linalg
-from networkx.algorithms.community.asyn_fluidc import asyn_fluidc
 from networkx.algorithms.community.centrality import girvan_newman
-from networkx.classes.function import common_neighbors
-from networkx.algorithms.community.kernighan_lin import kernighan_lin_bisection
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -68,12 +66,11 @@ def sortNodes(path, graph, comms, partition, type_sorting):
     @param graph: is a diGraph (if not None)
     @param k: is the number of the 'high-degree vertices' to consider in each community
     @param a: is the dumping parameter (probability to continue)
-    @param old_part: if not None works with "Kernighan Lin"
     @return the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
             the sorted_x and sorted_y nodes of communities (by degree)
 '''
-def computeData(path, graph, k, a, old_part=None):
+def computeData(path, graph, k, a):
     
     if path is None and graph is None or k < 0:
         return ()
@@ -83,29 +80,17 @@ def computeData(path, graph, k, a, old_part=None):
     comms = {}
     partition = {}
     i = 0
-    t = ()
-    
-    if old_part == None:
-        t = kernighan_lin_bisection(nx.to_undirected(g)) #Tuple of sets
-    else:
-        t = kernighan_lin_bisection(nx.to_undirected(g), partition=old_part)
+       
+    comp = girvan_newman(nx.to_undirected(g))
+    t= tuple(sorted(c) for c in next(comp))
+
     
     for c in t:
-        list_c = list(c)
-        comms.update({i : list_c})
-        for node in list_c:
-            partition.update({node : i})
-        i += 1
-    
-    '''fluidc_comm = asyn_fluidc(nx.to_undirected(g),2)
-    
-    for comm in fluidc_comm:
-        list_comm = list(comm)
-        comms.update({i : list_comm})
-        for node in list_comm:
-            partition.update({node : i})
-        i += 1'''
- 
+        comms.update({i:c})
+        for node in c:
+            partition.update({node:i})
+        i+=1
+        
     num_x = len(comms[0])
     num_y = len(comms[1])
     p_x = 1/num_x
@@ -171,8 +156,11 @@ def addEdgeToGraph(path, l):
         #print i,i[0],i[1],l[i]
         #continue uniform distribution in interval [0,1)
         #c=np.random.uniform()
-        delta+=l[i][0]/l[i][1]
-        max_delta = min(max_delta,(l[i][0]/l[i][1]))
+        d=l[i][1]
+        if d==0.0:
+            d=1.0
+        delta+=l[i][0]/d
+        max_delta = min(max_delta,(l[i][0]/d))
         #check acceptance probability
         #if c <= l[i][1]:
         g.add_edge(i[0],i[1])
