@@ -9,7 +9,7 @@ import utilities as ut
 
 '''
    This is Random Walk Controversy score.
-   @param a: is the dumping parameter (probability to continue)
+   @param a: is the probability to continue (1 - a is the restart probability)
    @param data: tuple returned by computeData
    @return the rwc of the diGraph
 '''    
@@ -18,14 +18,14 @@ def rwc(a, data):
     (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data    
     
     sub_c = np.subtract(c_x,c_y)
-    sub_c_alpha = np.dot(sub_c,(1-a))
+    sub_c_alpha = np.dot((1-a),sub_c)
     
     m_e_x = np.dot(mats_x[0],list(e_x.values()))
     m_e_y = np.dot(mats_y[0],list(e_y.values()))
     
     sub_m = np.subtract(m_e_x, m_e_y)
    
-    rwc_m = np.dot(sub_c_alpha,sub_m)
+    rwc_m = np.dot(np.transpose(sub_c_alpha),sub_m)
     
     return rwc_m
    
@@ -33,7 +33,7 @@ def rwc(a, data):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
-    @param a: is the dumping parameter (probability to continue)
+    @param a: is the probability to continue (1 - a is the restart probability)
     @param data: tuple returned by computeData
     @param edge: edge to add
     @return the delta rwc by 'Sherman-Morrison'
@@ -53,7 +53,7 @@ def deltaRwc(path, graph, a, data, edge):
     sourcecomm = part[sourcev] #community of start vertex
     p = mats_x[1] if sourcecomm == 0 else mats_y[1]
     q = g.out_degree(sourcev) #out_degree of source
-    source_row = p[sourcev,:] #row of sourcev in its transition matrix
+    source_col = p[:,sourcev] #col of sourcev in transposed transition matrix
     dangling = (q == 0) #bool source is a dangling vertex
     
     sub_c = np.subtract(c_x,c_y)
@@ -72,17 +72,17 @@ def deltaRwc(path, graph, a, data, edge):
         z_y = np.subtract(list(e_y.values()),v)
         
     else:
-        z_x = np.dot(1/(q+1),source_row)
+        z_x = np.dot(1/(q+1),source_col)
         z_x[destv] = -1/(q+1)
-        z_y = np.dot(1/(q+1),source_row)
+        z_y = np.dot(1/(q+1),source_col)
         z_y[destv] = -1/(q+1)
         
     mx_z = np.dot(a,np.dot(mats_x[0],z_x))
-    u_mx = np.dot(u,mats_x[0])
+    u_mx = np.dot(np.transpose(u),mats_x[0])
     my_z = np.dot(a,np.dot(mats_y[0],z_y))
-    u_my = np.dot(u,mats_y[0])
-    den_x = 1 + np.dot(u,mx_z)
-    den_y = 1 + np.dot(u,my_z)
+    u_my = np.dot(np.transpose(u),mats_y[0])
+    den_x = 1 + np.dot(np.transpose(u),mx_z)
+    den_y = 1 + np.dot(np.transpose(u),my_z)
     num_x = np.dot(mx_z,u_mx)
     num_y = np.dot(my_z,u_my)
     
@@ -91,7 +91,7 @@ def deltaRwc(path, graph, a, data, edge):
     
     ''' Sherman-Morrison Formula '''
     
-    delta = (1-a)*np.dot(sub_c,np.subtract(y_factor,x_factor))
+    delta = (1-a)*np.dot(np.transpose(sub_c),np.subtract(y_factor,x_factor))
     
     return delta
 
@@ -99,7 +99,7 @@ def deltaRwc(path, graph, a, data, edge):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param a: is the dumping parameter (probability to continue)
+    @param a: is the probability to continue (1 - a is the restart probability)
     @param k1: number of nodes of community X to consider, 
                ordered depending on type t
     @param k2: number of nodes of community Y to consider, 
@@ -222,7 +222,7 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    graphData = ut.computeData('../../outcomes/retweet_graph_beefban.pickle', None, 500, 0.85)
+    graphData = ut.computeData('../../outcomes/retweet_graph_beefban.pickle', None, 200, 200, 0.85)
     
     g = nx.read_gpickle('../../outcomes/retweet_graph_beefban.pickle')
     
@@ -236,15 +236,16 @@ if __name__ == '__main__':
     
     for i in range(0,4):
         
-        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 90, 60, graphData, i)
+        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 40, 40, graphData, i)
     
-        R.append(fagin(sorted_dp,10))
+        R.append(fagin(sorted_dp,160))
         
         print comment[i]
         print R[i][1]
         
         (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_beefban.pickle',R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 500, 0.85)     
+        mygraphData = ut.computeData(None, new_graph, 200, 200, 0.85)  
+        
         r1 = rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
         print comment[i],"%13.10f"%opt

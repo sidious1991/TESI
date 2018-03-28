@@ -14,7 +14,7 @@ from networkx.algorithms.community.centrality import girvan_newman
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
     @param comms: are the communities found by asyn_fluidc in computeData
-    @param part: is the partition of the nodes found by asyn_fluidc in computeData
+    @param part: is the partition of the nodes found by 'Girvan Newman' in computeData
     @param type_sorting: if 1: nodes of each community ordered by in_degree,
                          elif 2: nodes of each community ordered by ratio in_degree/degree_tot
                          else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
@@ -64,15 +64,16 @@ def sortNodes(path, graph, comms, partition, type_sorting):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param k: is the number of the 'high-degree vertices' to consider in each community
-    @param a: is the dumping parameter (probability to continue)
+    @param k1: is the number of the 'high-indegree vertices' to consider in community 0
+    @param k2: is the number of the 'high-indegree vertices' to consider in community 1
+    @param a: is the probability to continue (1 - a is the restart probability)
     @return the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
             the sorted_x and sorted_y nodes of communities (by degree)
 '''
-def computeData(path, graph, k, a):
+def computeData(path, graph, k1, k2, a):
     
-    if path is None and graph is None or k < 0:
+    if (path is None and graph is None) or (k1 < 0 or k2 < 0):
         return ()
     
     g = nx.read_gpickle(path) if path is not None else graph
@@ -83,7 +84,6 @@ def computeData(path, graph, k, a):
        
     comp = girvan_newman(nx.to_undirected(g))
     t= tuple(sorted(c) for c in next(comp))
-
     
     for c in t:
         comms.update({i:c})
@@ -111,23 +111,25 @@ def computeData(path, graph, k, a):
     c_x = []
     c_y = []
     
-    degrees = g.degree(g.nodes())
+    degrees = g.in_degree(g.nodes())
         
-    degrees_x = g.degree(comms[0]) #comm X -- to be ordered
-    degrees_y = g.degree(comms[1]) #comm Y -- to be ordered
+    degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
+    degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
            
     sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)  
+    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
     
     #inizialization
     for i in range(0,len(degrees)):
         c_x.append(0)
         c_y.append(0)
     
-    minimum = min(k,len(sorted_x),len(sorted_y))
+    minimum_k1 = min(k1,len(sorted_x))
+    minimum_k2 = min(k2,len(sorted_y))
     
-    for i in range(0,minimum):
+    for i in range(0,minimum_k1):
         c_x[sorted_x[i][0]] = 1
+    for i in range(0,minimum_k2):
         c_y[sorted_y[i][0]] = 1
     
     mats_x = M(None, g, a, e_x)
@@ -172,10 +174,10 @@ def addEdgeToGraph(path, l):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None) 
-    @param a: is the dumping parameter (probability to continue)
+    @param a: is the probability to continue (1 - a is the restart probability)
     @param personal: is the restart vector
     @return the M_x or M_y matrix inverted (source Garimella et alii), depending on the restart vector (personal),
-            and P_x or P_y matrix
+            and P_x or P_y matrix (transposed transition matrices)
 '''
 def M(path, graph, a, personal):
     
@@ -184,15 +186,18 @@ def M(path, graph, a, personal):
     
     g = nx.read_gpickle(path) if path is not None else graph
     
-    P = nx.google_matrix(g, alpha=1, personalization=personal, dangling=personal) # Transition matrix (per row)
-
+    P = nx.google_matrix(g, alpha=1, dangling=personal) # Transition matrix (per row). Returns NumPy array that is different from
+                                                        # ndarray!
+    
+    P_transp = np.transpose(P)
+    
     I = np.identity(len(g.nodes()))
 
-    m = np.subtract(I,np.dot(a,P))
+    m = np.subtract(I,np.dot(a,P_transp))
 
     m_inv = linalg.inv(m)
-    
-    p_array = np.array(P)
+        
+    p_array = np.array(P_transp)
 
     return (m_inv,p_array)
     
