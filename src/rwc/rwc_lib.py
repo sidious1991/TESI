@@ -223,9 +223,8 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 40, 0.85)
-
-    g = nx.read_gpickle('../../outcomes/parted_graph.pickle')
+    g = nx.read_gpickle('../../outcomes/retweet_graph_russia_march.pickle')
+    graphData = ut.computeData(None, g, 0.85)
     
     print "---------------------------------------------------------------------------------------------------------------------------"
     
@@ -233,25 +232,24 @@ if __name__ == '__main__':
     print "RWC score =%13.10f"%r #%width.precisionf
     print "---------------------------------------------------------------------------------------------------------------------------"
     R = []
-    comment = ["Opt Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Opt Decrease RWC -- in_degree type : ","Opt Decrease RWC -- ratio type : ","Opt Decrease RWC -- betweenness centrality : "]
+    comment = ["Opt Total Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- in_degree type : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : "]
     
     for i in range(0,4):
         
-        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 40, 40, graphData, i)
+        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 10, 10, graphData, i)
     
-        R.append(fagin(sorted_dp,20))
+        R.append(fagin(sorted_dp,10))
         
-        print comment[i]
         print R[i][1]
         
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][0],R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 40, 40, 0.85)  
+        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_russia_march.pickle',R[i][0],R[i][1])
+        mygraphData = ut.computeData(None, new_graph, 0.85)  
         
         r1 = rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
         print comment[i],"%13.10f"%opt
         print "Maximum Optimum Decrease RWC : =%13.10f"%max_opt
-        print "Delta TOT =%13.10f"%(r-r1), " acceptance_ratio :",ratio
+        print "Real Total Decrease RWC =%13.10f"%(r-r1), " acceptance_ratio :",ratio
         print "-----------------------------------------------"
       
     print "-------------------------------------------------End of simulation---------------------------------------------------------"  

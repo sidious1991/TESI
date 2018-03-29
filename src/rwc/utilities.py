@@ -66,16 +66,15 @@ def sortNodes(path, graph, comms, partition, type_sorting):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param k1: is the number of the 'high-indegree vertices' to consider in community 0
-    @param k2: is the number of the 'high-indegree vertices' to consider in community 1
+    @param percent_community: is the percentage of the high in_degree vertices to consider in each communities
     @param a: is the probability to continue (1 - a is the restart probability)
     @return the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
             the sorted_x and sorted_y nodes of communities (by degree)
 '''
-def computeData(path, graph, k1, k2, a):
+def computeData(path, graph, a, percent_community = 0.25):
     
-    if (path is None and graph is None) or (k1 < 0 or k2 < 0):
+    if (path is None and graph is None):
         return ()
     
     g = nx.read_gpickle(path) if path is not None else graph
@@ -85,7 +84,7 @@ def computeData(path, graph, k1, k2, a):
     i = 0
        
     comp = girvan_newman(nx.to_undirected(g))
-    t= tuple(sorted(c) for c in next(comp))
+    t = tuple(sorted(c) for c in next(comp))
     
     for c in t:
         comms.update({i:c})
@@ -97,6 +96,9 @@ def computeData(path, graph, k1, k2, a):
     num_y = len(comms[1])
     p_x = 1/num_x
     p_y = 1/num_y
+    
+    k1 = int(math.ceil(num_x*percent_community))
+    k2 = int(math.ceil(num_y*percent_community))
     
     e_x = {}
     e_y = {}
@@ -142,8 +144,11 @@ def computeData(path, graph, k1, k2, a):
 
 '''
     @param path: is the path to diGraph (if not None)
-    @param l: is the list which contains new edges to add with their delta_RWC*link_predictor and link predictor
-    @return new graph,optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC
+    @param l: is the sorted list which contains new edges to add with their delta_RWC*link_predictor
+              i.e. l = [((node_from, node_to),link_predictor*delta_rwc), ((node_from, node_to),link_predictor*delta_rwc),..]
+    @param dictio: dictio version of the list l with the information of link_predictor too
+              i.e. dictio = {(edge):(link_predictor*delta_rwc,link_predictor), ..}
+    @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC
 
 '''
 def addEdgeToGraph(path, l, dictio):
@@ -157,23 +162,20 @@ def addEdgeToGraph(path, l, dictio):
     max_delta = 0 # maximum expected delta
     count=0
     for i in range(0,len(l)):
-        #print i,i[0],i[1],l[i]
-        #continue uniform distribution in interval [0,1)
-        #c=np.random.uniform()
+        
         edge = l[i][0]
         
         delta_dot_predictor = l[i][1]
         
-        d = dictio[edge][1] #predictor for that edge
-        if d == 0.0:
-            d = 1.0
+        pred = dictio[edge][1] #predictor for that edge
+        #if pred == 0.0:
+            #pred = 1.0
         
-        delta += delta_dot_predictor/d
-        max_delta = min(max_delta,(delta_dot_predictor/d))
+        delta += delta_dot_predictor/pred
+        max_delta = min(max_delta,(delta_dot_predictor/pred))
         #print delta, max_delta
+        #print edge
         
-        #check acceptance probability
-        #if c <= l[i][1]:
         g.add_edge(edge[0],edge[1])
         count +=1
         
