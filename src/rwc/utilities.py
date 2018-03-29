@@ -66,7 +66,7 @@ def sortNodes(path, graph, comms, partition, type_sorting):
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
-    @param percent_community: is the percentage of the high in_degree vertices to consider in each communities
+    @param percent_community: is the percentage of the high in_degree vertices to consider in each community
     @param a: is the probability to continue (1 - a is the restart probability)
     @return the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,

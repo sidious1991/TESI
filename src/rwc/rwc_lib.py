@@ -106,7 +106,7 @@ def deltaRwc(path, graph, a, data, edge):
     @param k2: number of nodes of community Y to consider, 
                ordered depending on type t
     @param data: data computed by computeData in utilities module
-    @param t: if 0 nodes of each community ordered by degree_tot,
+    @param t: if 0 nodes of each community ordered by in_degree,
                  elif 1 nodes of each community ordered by in_degree,
                  elif 2 nodes of each community ordered by ratio in_degree/degree_tot
                  else nodes of each community ordered by betweenness centrality
