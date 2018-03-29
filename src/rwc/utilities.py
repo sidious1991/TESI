@@ -2,7 +2,9 @@ from __future__ import division
 import networkx as nx
 import numpy as np
 import math
-import itertools
+#from buildRetweetGraph.endorsementgraph import EndorsementGraph
+#import itertools
+#import matplotlib.pyplot as plt
 from scipy import linalg
 from networkx.algorithms.community.centrality import girvan_newman
 
@@ -144,7 +146,7 @@ def computeData(path, graph, k1, k2, a):
     @return new graph,optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC
 
 '''
-def addEdgeToGraph(path, l):
+def addEdgeToGraph(path, l, dictio):
     
     if path is None:
         return ()
@@ -154,18 +156,25 @@ def addEdgeToGraph(path, l):
     delta=0
     max_delta = 0 # maximum expected delta
     count=0
-    for i in l:
+    for i in range(0,len(l)):
         #print i,i[0],i[1],l[i]
         #continue uniform distribution in interval [0,1)
         #c=np.random.uniform()
-        d=l[i][1]
-        if d==0.0:
-            d=1.0
-        delta+=l[i][0]/d
-        max_delta = min(max_delta,(l[i][0]/d))
+        edge = l[i][0]
+        
+        delta_dot_predictor = l[i][1]
+        
+        d = dictio[edge][1] #predictor for that edge
+        if d == 0.0:
+            d = 1.0
+        
+        delta += delta_dot_predictor/d
+        max_delta = min(max_delta,(delta_dot_predictor/d))
+        #print delta, max_delta
+        
         #check acceptance probability
         #if c <= l[i][1]:
-        g.add_edge(i[0],i[1])
+        g.add_edge(edge[0],edge[1])
         count +=1
         
     return (g,-delta,count/len(l),-max_delta)
@@ -222,6 +231,8 @@ def AdamicAdarIndex(g, edge):
     
     for neigh in common:
         index += 1/math.log(g_undirect.degree(neigh), 10)
+    
+    index += 1 #To avoid zero indices, we scale them
     
     return index
     
@@ -409,7 +420,7 @@ if __name__ == '__main__':
     print p
     '''    
     '''
-    eg = EndorsementGraph('retweet_graph_beefban')
+    eg = EndorsementGraph("retweet_graph_russia_march")
     g = eg.buildEGraph()
     print g.edges(data = False)
     print len(g.edges())

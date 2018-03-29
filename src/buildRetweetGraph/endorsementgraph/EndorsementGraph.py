@@ -20,7 +20,7 @@ class EndorsementGraph:
         digraph = nx.DiGraph(inputname = inputname)
         
         current_val = 0
-        dictio_nodes_convert = {} # node : num_val (key : value)
+        dictio_nodes_convert = {} # node : node_index_in_graph (key : value) -- convert each node string in integer id
         dictio_nodes = {} # node : totalretweetcount (key : value)
         dictio_edges = {} # (source, dest) : retweetcount (key : value)
         

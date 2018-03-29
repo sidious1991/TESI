@@ -91,7 +91,8 @@ def deltaRwc(path, graph, a, data, edge):
     
     ''' Sherman-Morrison Formula '''
     
-    delta = (1-a)*np.dot(np.transpose(sub_c),np.subtract(y_factor,x_factor))
+    delta_partial = np.dot(np.transpose(sub_c),np.subtract(y_factor,x_factor))
+    delta = np.dot((1-a),delta_partial)
     
     return delta
 
@@ -222,9 +223,9 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    graphData = ut.computeData('../../outcomes/retweet_graph_beefban.pickle', None, 200, 200, 0.85)
-    
-    g = nx.read_gpickle('../../outcomes/retweet_graph_beefban.pickle')
+    graphData = ut.computeData('../../outcomes/parted_graph.pickle', None, 40, 40, 0.85)
+
+    g = nx.read_gpickle('../../outcomes/parted_graph.pickle')
     
     print "---------------------------------------------------------------------------------------------------------------------------"
     
@@ -238,13 +239,13 @@ if __name__ == '__main__':
         
         sorted_dp = deltaPredictorOrdered(None, g, 0.85, 40, 40, graphData, i)
     
-        R.append(fagin(sorted_dp,160))
+        R.append(fagin(sorted_dp,20))
         
         print comment[i]
         print R[i][1]
         
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_beefban.pickle',R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 200, 200, 0.85)  
+        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][0],R[i][1])
+        mygraphData = ut.computeData(None, new_graph, 40, 40, 0.85)  
         
         r1 = rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf
