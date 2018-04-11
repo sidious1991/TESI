@@ -106,11 +106,6 @@ def deltaRwc(path, graph, a, data, edge):
     @param k2: number of nodes of community Y to consider, 
                ordered depending on type t
     @param data: data computed by computeData in utilities module
-    @param t: if 0 nodes of each community ordered by in_degree,
-                 elif 1 nodes of each community ordered by in_degree,
-                 elif 2 nodes of each community ordered by ratio in_degree/degree_tot
-                 else nodes of each community ordered by betweenness centrality
-    @param dictioPol: polarization score of nodes ({node:polarization ...})
     @return a tuple of two lists and two dictionaries:
             the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
             The list returned is ordered in increasing order of delta_of_rwc.
@@ -118,7 +113,7 @@ def deltaRwc(path, graph, a, data, edge):
             The list returned is ordered in decreasing order of link_predictor.
             The two dictionaries are the unsorted versions of the two lists.
 '''
-def deltaPredictorOrdered(path, graph, a, k1, k2, data, t, dictioPol=None):
+def deltaPredictorOrdered(path, graph, a, k1, k2, data):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
@@ -126,9 +121,6 @@ def deltaPredictorOrdered(path, graph, a, k1, k2, data, t, dictioPol=None):
     g = nx.read_gpickle(path) if path is not None else graph
     sorted_x = data[8]
     sorted_y = data[9]
-    
-    if t > 0:
-        sorted_x, sorted_y = ut.sortNodes(None, g, data[6], data[7], t)
      
     min_k1 = min(k1,len(sorted_x))
     min_k2 = min(k2,len(sorted_y))
@@ -138,20 +130,16 @@ def deltaPredictorOrdered(path, graph, a, k1, k2, data, t, dictioPol=None):
     
     adj_mat = np.array(nx.attr_matrix(g)[0])
     
-    if dictioPol is not None:
-        return ()
-    
-    else:
-        for i in range(0,min_k1):
-            for j in range(0,min_k2):
-                if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
-                    e = (sorted_x[i][0],sorted_y[j][0])
-                    dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
-                if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
-                    e = (sorted_y[j][0],sorted_x[i][0])
-                    dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                    dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
+    for i in range(0,min_k1):
+        for j in range(0,min_k2):
+            if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
+                e = (sorted_x[i][0],sorted_y[j][0])
+                dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
+            if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
+                e = (sorted_y[j][0],sorted_x[i][0])
+                dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
+                dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
 
     dict_delta_sorted = sorted(dictio_delta.iteritems(), key=lambda (k,v):(v,k))
     dict_predictor_sorted = sorted(dictio_predictor.iteritems(), key=lambda (k,v):(v,k), reverse=True)
@@ -223,27 +211,34 @@ def fagin(data, k):
 
 if __name__ == '__main__':
     
-    g = nx.read_gpickle('../../outcomes/retweet_graph_russia_march.pickle')
-    graphData = ut.computeData(None, g, 0.85)
-    
-    print "---------------------------------------------------------------------------------------------------------------------------"
-    
-    r = rwc(0.85, graphData)
-    print "RWC score =%13.10f"%r #%width.precisionf
-    print "---------------------------------------------------------------------------------------------------------------------------"
+    g = nx.read_gpickle('../../outcomes/retweet_graph_beefban.pickle')
+
     R = []
-    comment = ["Opt Total Decrease RWC -- degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- in_degree type : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : "]
+    comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
+    
+    '''
+        graph_data_rwc = computeData(0,percent = 1)
+        rwc(0.85, graph_data_rwc)
+    '''
     
     for i in range(0,4):
         
-        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 10, 10, graphData, i)
+        graphData = ut.computeData(None, g, 0.85, i, percent_community=0.5)
     
-        R.append(fagin(sorted_dp,10))
+        print "---------------------------------------------------------------------------------------------------------------------------"
+    
+        r = rwc(0.85, graphData)
+        print "RWC score =%13.10f"%r #%width.precisionf
+        print "---------------------------------------------------------------------------------------------------------------------------"
+        
+        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 40, 40, graphData)
+    
+        R.append(fagin(sorted_dp,20))
         
         print R[i][1]
         
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_russia_march.pickle',R[i][0],R[i][1])
-        mygraphData = ut.computeData(None, new_graph, 0.85)  
+        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/retweet_graph_beefban.pickle',R[i][0],R[i][1])
+        mygraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=0.5)  
         
         r1 = rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1 #%width.precisionf

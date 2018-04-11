@@ -2,9 +2,9 @@ from __future__ import division
 import networkx as nx
 import numpy as np
 import math
-#from buildRetweetGraph.endorsementgraph import EndorsementGraph
+from buildRetweetGraph.endorsementgraph import EndorsementGraph
 #import itertools
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from scipy import linalg
 from networkx.algorithms.community.centrality import girvan_newman
 
@@ -16,10 +16,12 @@ from networkx.algorithms.community.centrality import girvan_newman
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
     @param comms: are the communities found by asyn_fluidc in computeData
-    @param part: is the partition of the nodes found by 'Girvan Newman' in computeData
-    @param type_sorting: if 1: nodes of each community ordered by in_degree,
-                         elif 2: nodes of each community ordered by ratio in_degree/degree_tot
-                         else: nodes of each community ordered by betweenness centrality (destination nodes of the whole graph)
+    @param partition: is the partition of the nodes found by 'Girvan Newman' in computeData
+    @param type_sorting: if 0: nodes of each community ordered by in_degree,
+                         elif 1: nodes of each community ordered by ratio (in_degree)/(out_degree + 1)
+                         elif 2: nodes of each community ordered by betweenness centrality
+                         else: nodes of each community ordered by AvgInDegree 
+    @return sorted nodes of the two communities (sorted_x,sorted_y) by type_sorting
 '''
 def sortNodes(path, graph, comms, partition, type_sorting):
     
@@ -34,7 +36,7 @@ def sortNodes(path, graph, comms, partition, type_sorting):
     sorted_y = []
     
     #in_degree     
-    if type_sorting == 1:
+    if type_sorting == 0:
         
         degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
         degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
@@ -43,36 +45,50 @@ def sortNodes(path, graph, comms, partition, type_sorting):
         sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
     
     #ratio
-    elif type_sorting == 2:
+    elif type_sorting == 1:
         for i in comms[0]:
-            degrees_x.append((i,g.in_degree(i)/g.degree(i)))
+            degrees_x.append((i,g.in_degree(i)/(g.out_degree(i)+1)))
             
         for j in comms[1]:
-            degrees_y.append((j,g.in_degree(j)/g.degree(j)))
+            degrees_y.append((j,g.in_degree(j)/(g.out_degree(j)+1)))
             
         sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
         sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
         
-    #betweenness centrality (destination nodes of the whole graph)
-    else:
-        centrality_x = nx.betweenness_centrality_subset(g, comms[0], g.nodes(), normalized=True)
-        centrality_y = nx.betweenness_centrality_subset(g, comms[1], g.nodes(), normalized=True)
+    #betweenness centrality
+    elif type_sorting == 2:
+        centrality_x = nx.betweenness_centrality_subset(g, comms[0], comms[1], normalized=True)
+        centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[0], normalized=True)
     
-        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
-        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
+        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=False)
+        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=False)
+
+    else:
+        for i in comms[0]:
+            degrees_x.append((i,AvgInDegree(i, g)))
+            
+        for j in comms[1]:
+            degrees_y.append((j,AvgInDegree(j, g)))
+
+        sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
+        sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
 
     return (sorted_x, sorted_y)
 
 '''
     @param path: is the path to diGraph (if not None)
     @param graph: is a diGraph (if not None)
+    @param type_sorting: if 0: nodes of each community ordered by in_degree,
+                         elif 1: nodes of each community ordered by ratio (in_degree)/(out_degree + 1)
+                         elif 2: nodes of each community ordered by betweenness centrality
+                         else: nodes of each community ordered by AvgInDegree 
     @param percent_community: is the percentage of the high in_degree vertices to consider in each community
     @param a: is the probability to continue (1 - a is the restart probability)
     @return the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
             the sorted_x and sorted_y nodes of communities (by degree)
 '''
-def computeData(path, graph, a, percent_community = 0.25):
+def computeData(path, graph, a, type_sorting, percent_community = 0.25):
     
     if (path is None and graph is None):
         return ()
@@ -117,11 +133,7 @@ def computeData(path, graph, a, percent_community = 0.25):
     
     degrees = g.in_degree(g.nodes())
         
-    degrees_x = g.in_degree(comms[0]) #comm X -- to be ordered
-    degrees_y = g.in_degree(comms[1]) #comm Y -- to be ordered
-           
-    sorted_x = sorted(degrees_x ,key=lambda tup: tup[1], reverse=True)
-    sorted_y = sorted(degrees_y ,key=lambda tup: tup[1], reverse=True)
+    (sorted_x,sorted_y) = sortNodes(None, g, comms, partition, type_sorting)
     
     #inizialization
     for i in range(0,len(degrees)):
@@ -173,7 +185,7 @@ def addEdgeToGraph(path, l, dictio):
         
         delta += delta_dot_predictor/pred
         max_delta = min(max_delta,(delta_dot_predictor/pred))
-        #print delta, max_delta
+        print delta
         #print edge
         
         g.add_edge(edge[0],edge[1])
@@ -237,6 +249,21 @@ def AdamicAdarIndex(g, edge):
     index += 1 #To avoid zero indices, we scale them
     
     return index
+   
+'''
+    @param g: the digraph
+    @param node: the node to consider
+    @return the average number of predecessors of node in the digraph g that retweet it 
+''' 
+def AvgInDegree(node, g):    
+    
+    preds = g.predecessors(node)
+    avg_in_degree = 0.0
+        
+    for pred in preds:
+        avg_in_degree += 1/g.out_degree(pred)                            
+      
+    return avg_in_degree
     
 '''
     @param path: is the path to diGraph (if not None)
@@ -421,13 +448,12 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
-    '''
-    eg = EndorsementGraph("retweet_graph_russia_march")
+    eg = EndorsementGraph("retweet_graph_beefban")
     g = eg.buildEGraph()
     print g.edges(data = False)
     print len(g.edges())
     print g.nodes(data = False)
     print len(g.nodes)
-    nx.draw(g)
+    nx.draw_networkx(g, labels = {21:21, 418:418, 439:439})
     plt.show()
-    '''
+    
