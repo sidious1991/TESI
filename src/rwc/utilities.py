@@ -197,7 +197,7 @@ def addEdgeToGraph(path, l, dictio, graph_name, strategy):
         count +=1
     
     'Save new graph with added edges by current strategy'
-    nx.write_gpickle(g, '../../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
+    nx.write_gpickle(g, '../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
     
     #colors = [g[u][v]['color'] for (u,v) in g.edges()]
     #nx.draw(g, edges=g.edges(), edge_color=colors)
@@ -460,6 +460,7 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
+    
     eg = EndorsementGraph("retweet_graph_nemtsov")
     g = eg.buildEGraph()
     print g.edges(data = False)
@@ -468,4 +469,3 @@ if __name__ == '__main__':
     print len(g.nodes)
     nx.draw(g)
     plt.show()
-    

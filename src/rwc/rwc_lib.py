@@ -219,42 +219,4 @@ def fagin(data, k):
 
 
 if __name__ == '__main__':
-    
-    g = nx.read_gpickle('../../outcomes/parted_graph.pickle')
-
-    R = []
-    comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
-    graph_name = 'parted_graph'
-    strategies = ['in_deg','ratio','betwn','avg_in_deg']
-    '''
-        graph_data_rwc = computeData(0,percent = 1)
-        rwc(0.85, graph_data_rwc)
-    '''
-    
-    for i in range(0,4):
-        
-        graphData = ut.computeData(None, g, 0.85, i, percent_community=0.5)
-    
-        print "---------------------------------------------------------------------------------------------------------------------------"
-    
-        r = rwc(0.85, graphData)
-        print "RWC score =%13.10f"%r[0] #%width.precisionf
-        print "---------------------------------------------------------------------------------------------------------------------------"
-        
-        sorted_dp = deltaPredictorOrdered(None, g, 0.85, 40, 40, graphData, r)
-    
-        R.append(fagin(sorted_dp,20))
-        
-        print R[i][1]
-        
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../../outcomes/parted_graph.pickle',R[i][0],R[i][1],graph_name,strategies[i])
-        mygraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=0.5)  
-        
-        r1 = rwc(0.85, mygraphData)
-        print "RWC score after addiction of accepted edges =%13.10f"%r1[0] #%width.precisionf
-        print comment[i],"%13.10f"%opt
-        print "Maximum Optimum Decrease RWC : =%13.10f"%max_opt
-        print "Real Total Decrease RWC =%13.10f"%(r[0]-r1[0]), " acceptance_ratio :",ratio
-        print "-----------------------------------------------"
-      
-    print "-------------------------------------------------End of simulation---------------------------------------------------------"  
+    pass
