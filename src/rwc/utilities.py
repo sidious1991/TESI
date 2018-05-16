@@ -460,12 +460,12 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
-    eg = EndorsementGraph("retweet_graph_beefban")
+    eg = EndorsementGraph("retweet_graph_nemtsov")
     g = eg.buildEGraph()
     print g.edges(data = False)
     print len(g.edges())
     print g.nodes(data = False)
     print len(g.nodes)
-    nx.draw_networkx(g, labels = {21:21, 418:418, 439:439})
+    nx.draw(g)
     plt.show()
     
