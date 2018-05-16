@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 import math
 from buildRetweetGraph.endorsementgraph import EndorsementGraph
+from bsddb.dbshelve import HIGHEST_PROTOCOL
 #import itertools
 import matplotlib.pyplot as plt
 from scipy import linalg
@@ -48,7 +49,7 @@ def sortNodes(path, graph, comms, partition, type_sorting):
     elif type_sorting == 1:
         for i in comms[0]:
             degrees_x.append((i,g.in_degree(i)/(g.out_degree(i)+1)))
-            
+                    
         for j in comms[1]:
             degrees_y.append((j,g.in_degree(j)/(g.out_degree(j)+1)))
             
@@ -160,16 +161,19 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
               i.e. l = [((node_from, node_to),link_predictor*delta_rwc), ((node_from, node_to),link_predictor*delta_rwc),..]
     @param dictio: dictio version of the list l with the information of link_predictor too
               i.e. dictio = {(edge):(link_predictor*delta_rwc,link_predictor), ..}
-    @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC
+    @param graph_name: name of graph
+    @param strategy: in_deg, ratio ...
+    @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC.
+            Finally plot the graph with added edges.
 
 '''
-def addEdgeToGraph(path, l, dictio):
+def addEdgeToGraph(path, l, dictio, graph_name, strategy):
     
     if path is None:
         return ()
         
     g = nx.read_gpickle(path)
-    
+        
     delta=0
     max_delta = 0 # maximum expected delta
     count=0
@@ -188,8 +192,16 @@ def addEdgeToGraph(path, l, dictio):
         print delta
         #print edge
         
-        g.add_edge(edge[0],edge[1])
+        g.add_edge(edge[0],edge[1],color='red')
+        
         count +=1
+    
+    'Save new graph with added edges by current strategy'
+    nx.write_gpickle(g, '../../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
+    
+    #colors = [g[u][v]['color'] for (u,v) in g.edges()]
+    #nx.draw(g, edges=g.edges(), edge_color=colors)
+    #plt.show()
         
     return (g,-delta,count/len(l),-max_delta)
 

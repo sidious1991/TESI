@@ -31,8 +31,16 @@ if __name__ == '__main__':
     '''
     G = nx.random_partition_graph([80,80],.30,.001, directed=True)
     
+    for edge in G.edges():
+        G[edge[0]][edge[1]]['color'] = 'black'
+    
     nx.write_gpickle(G, '../outcomes/parted_graph.pickle', protocol=HIGHEST_PROTOCOL)
     
+    nx.draw(G)
+    plt.show()
+    '''
+    '''
+    G = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
     nx.draw(G)
     plt.show()
     '''

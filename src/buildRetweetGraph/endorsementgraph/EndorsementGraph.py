@@ -53,7 +53,7 @@ class EndorsementGraph:
                 
             #Set edges of the endorsement graph
             for key in dictio_edges.keys():
-                digraph.add_edge(dictio_nodes_convert[key[0]], dictio_nodes_convert[key[1]], prob = dictio_edges[key]/dictio_nodes[key[0]])
+                digraph.add_edge(dictio_nodes_convert[key[0]], dictio_nodes_convert[key[1]], color = 'black', prob = dictio_edges[key]/dictio_nodes[key[0]])
                 
         #serialization
         nx.write_gpickle(digraph, '../../outcomes/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
