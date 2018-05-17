@@ -58,11 +58,11 @@ def sortNodes(path, graph, comms, partition, type_sorting):
         
     #betweenness centrality
     elif type_sorting == 2:
-        centrality_x = nx.betweenness_centrality_subset(g, comms[0], comms[1], normalized=True)
-        centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[0], normalized=True)
+        centrality_x = nx.betweenness_centrality_subset(g, comms[0], comms[0], normalized=True)
+        centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[1], normalized=True)
     
-        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=False)
-        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=False)
+        sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
+        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
 
     else:
         for i in comms[0]:

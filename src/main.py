@@ -59,14 +59,19 @@ if __name__ == '__main__':
         
             in_deg = G.in_degree(node)
             out_deg = G.out_degree(node)
-        
-            avg_in_out = (avg_in_out*scanned_nodes + (in_deg/(out_deg+1)))/(scanned_nodes + 1)
-            var_in_out = (var_in_out*scanned_nodes + ((in_deg/(out_deg+1)) - avg_in_out)**2)/(scanned_nodes + 1)
+            ratio = (float(in_deg)/float(out_deg+1))
+            
+            '''Welford's method:'''
+            old_avg = avg_in_out
+            avg_in_out = (avg_in_out*scanned_nodes + ratio)/(scanned_nodes + 1)
+            var_in_out = var_in_out + (ratio - avg_in_out)*(ratio - old_avg)
         
             scanned_nodes += 1
             
             if scanned_nodes < minimum:
-                print "%d,%d,%.3f"%(in_deg,(out_deg+1),(float(in_deg)/float(out_deg + 1)))
+                print "%d,%d,%.3f"%(in_deg,(out_deg+1),ratio)
+        
+        var_in_out /= (len(nodes)-1) # correct variance
         
         print path+" avg_in_out = %13.10f"%avg_in_out
         print path+" var_in_out = %13.10f"%var_in_out
@@ -74,7 +79,7 @@ if __name__ == '__main__':
     print '\n'    
     print '##########################---SIMULATIONS---###############################'
     
-    g = nx.read_gpickle('../outcomes/parted_graph.pickle')
+    g = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
 
     R = []
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
@@ -101,7 +106,7 @@ if __name__ == '__main__':
         
         print R[i][1]
         
-        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../outcomes/parted_graph.pickle',R[i][0],R[i][1],graph_name,strategies[i])
+        (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph('../outcomes/retweet_graph_beefban.pickle',R[i][0],R[i][1],graph_name,strategies[i])
         mygraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=0.5)  
         
         r1 = rwc_lib.rwc(0.85, mygraphData)
