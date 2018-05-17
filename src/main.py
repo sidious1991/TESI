@@ -1,5 +1,4 @@
 import tweepy
-from rwc import utilities
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -40,9 +39,9 @@ if __name__ == '__main__':
     nx.draw(G)
     plt.show()
     '''
-    print '########---Study, for all graphs, of average of ratio in_degree/(out_degree + 1) and its variance---########'
-       
     graph = ['../outcomes/parted_graph.pickle','../outcomes/retweet_graph_beefban.pickle','../outcomes/retweet_graph_russia_march.pickle','../outcomes/retweet_graph_ukraine.pickle','../outcomes/retweet_graph_nemtsov.pickle']
+        
+    print '########---Study, for all graphs, of ratio in_degree/(out_degree + 1) in its average and its variance. \nStudy of the trend of (in_degree, out_degree + 1, ratio) too.---########'
     
     for path in graph:
         print '-----------------------------------------------------------'
@@ -52,13 +51,22 @@ if __name__ == '__main__':
         scanned_nodes = 0
     
         G = nx.read_gpickle(path)
-    
-        for node in G.nodes():
+        nodes = G.nodes()
         
-            avg_in_out = (avg_in_out*scanned_nodes + (G.in_degree(node)/(G.out_degree(node)+1)))/(scanned_nodes + 1)
-            var_in_out = (var_in_out*scanned_nodes + (G.in_degree(node)/(G.out_degree(node)+1) - avg_in_out)**2)/(scanned_nodes + 1)
+        minimum = min(len(nodes),100)
+        
+        for node in nodes:
+        
+            in_deg = G.in_degree(node)
+            out_deg = G.out_degree(node)
+        
+            avg_in_out = (avg_in_out*scanned_nodes + (in_deg/(out_deg+1)))/(scanned_nodes + 1)
+            var_in_out = (var_in_out*scanned_nodes + ((in_deg/(out_deg+1)) - avg_in_out)**2)/(scanned_nodes + 1)
         
             scanned_nodes += 1
+            
+            if scanned_nodes < minimum:
+                print "%d,%d,%.3f"%(in_deg,(out_deg+1),(float(in_deg)/float(out_deg + 1)))
         
         print path+" avg_in_out = %13.10f"%avg_in_out
         print path+" var_in_out = %13.10f"%var_in_out
