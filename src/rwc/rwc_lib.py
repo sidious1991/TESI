@@ -16,7 +16,7 @@ import math
 '''    
 def rwc(a, data):
     
-    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data    
+    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data    
     
     sub_c = np.subtract(c_x,c_y)
     sub_c_alpha = np.dot((1-a),sub_c)
@@ -49,7 +49,7 @@ def deltaRwc(path, graph, a, data, edge):
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,sorted_x,sorted_y) = data 
+    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data 
     
     sourcev = edge[0]
     destv = edge[1]
@@ -109,7 +109,8 @@ def deltaRwc(path, graph, a, data, edge):
                ordered depending on type t
     @param k2: number of nodes of community Y to consider, 
                ordered depending on type t
-    @param data: data computed by computeData in utilities module
+    @param sorted_x_y: tuple (sorted_x,sorted_y) returned by sortNodes
+    @param data: tuple returned by computeData
     @param r: the tuple returned by rwc function
     @return a tuple of two lists and two dictionaries:
             the first is a list of tuples. Each tuple is of type (edge:delta_of_rwc).
@@ -118,14 +119,14 @@ def deltaRwc(path, graph, a, data, edge):
             The list returned is ordered in decreasing order of link_predictor.
             The two dictionaries are the unsorted versions of the two lists.
 '''
-def deltaPredictorOrdered(path, graph, a, k1, k2, data, r):
+def deltaPredictorOrdered(path, graph, a, k1, k2, sorted_x_y, data, r):
     
     if path is None and graph is None or (k1 < 0 or k2 < 0):
         return
     
     g = nx.read_gpickle(path) if path is not None else graph
-    sorted_x = data[8]
-    sorted_y = data[9]
+    sorted_x = sorted_x_y[0]
+    sorted_y = sorted_x_y[1]
     
     ratio = (r[1]/r[2]) #c_x*r_x/c_y*r_y
     print r[1],r[2],ratio

@@ -62,7 +62,7 @@ def sortNodes(path, graph, comms, partition, type_sorting):
         centrality_y = nx.betweenness_centrality_subset(g, comms[1], comms[1], normalized=True)
     
         sorted_x = sorted([i for i in centrality_x.iteritems() if partition[i[0]] == 0], key=lambda (k,v):(v,k), reverse=True)
-        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)
+        sorted_y = sorted([i for i in centrality_y.iteritems() if partition[i[0]] == 1], key=lambda (k,v):(v,k), reverse=True)       
 
     else:
         for i in comms[0]:
@@ -85,9 +85,9 @@ def sortNodes(path, graph, comms, partition, type_sorting):
                          else: nodes of each community ordered by AvgInDegree 
     @param percent_community: is the percentage of sorted (by type_sorting) vertices to consider in each community
     @param a: is the probability to continue (1 - a is the restart probability)
-    @return the communities of the graph, the personalization vectors for the communities,
-            the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
-            the sorted_x and sorted_y nodes of communities (by degree)
+    @return the sorted_x and sorted_y nodes of communities (by type_sorting),
+            the communities of the graph, the personalization vectors for the communities,
+            the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method
 '''
 def computeData(path, graph, a, type_sorting, percent_community = 0.25):
     
@@ -152,7 +152,7 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
     mats_x = M(None, g, a, e_x)
     mats_y = M(None, g, a, e_y)
     
-    return (e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,sorted_x,sorted_y)
+    return (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition)
     
 
 '''
@@ -164,7 +164,7 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
     @param graph_name: name of graph
     @param strategy: in_deg, ratio ...
     @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC.
-            Finally plot the graph with added edges.
+            Finally save the .pickle new graph obtained by edges addiction.
 
 '''
 def addEdgeToGraph(path, l, dictio, graph_name, strategy):
@@ -460,8 +460,7 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
-    
-    eg = EndorsementGraph("retweet_graph_nemtsov")
+    eg = EndorsementGraph("retweet_graph_indiana")
     g = eg.buildEGraph()
     print g.edges(data = False)
     print len(g.edges())
@@ -469,3 +468,4 @@ if __name__ == '__main__':
     print len(g.nodes)
     nx.draw(g)
     plt.show()
+    
