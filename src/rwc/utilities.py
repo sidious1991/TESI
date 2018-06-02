@@ -167,18 +167,18 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
             Finally save the .pickle new graph obtained by edges addiction.
 
 '''
-def addEdgeToGraph(path, l, dictio, graph_name, strategy):
+def addEdgeToGraph(path, graph, l, dictio, graph_name, strategy):
     
-    if path is None:
+    if path is None and graph is None:
         return ()
-        
-    g = nx.read_gpickle(path)
-        
+    
+    g = nx.read_gpickle(path) if path is not None else graph
+   
     delta=0
     max_delta = 0 # maximum expected delta
     count=0
     for i in range(0,len(l)):
-        
+
         edge = l[i][0]
         
         delta_dot_predictor = l[i][1]
@@ -189,7 +189,7 @@ def addEdgeToGraph(path, l, dictio, graph_name, strategy):
         
         delta += delta_dot_predictor/pred
         max_delta = min(max_delta,(delta_dot_predictor/pred))
-        print delta
+        #print delta
         #print edge
         
         g.add_edge(edge[0],edge[1],color='red')
@@ -197,7 +197,7 @@ def addEdgeToGraph(path, l, dictio, graph_name, strategy):
         count +=1
     
     'Save new graph with added edges by current strategy'
-    nx.write_gpickle(g, '../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
+    #nx.write_gpickle(g, '../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
     
     #colors = [g[u][v]['color'] for (u,v) in g.edges()]
     #nx.draw(g, edges=g.edges(), edge_color=colors)
@@ -460,7 +460,7 @@ if __name__ == '__main__':
     p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
     print p
     '''    
-    eg = EndorsementGraph("retweet_graph_indiana")
+    ''' eg = EndorsementGraph("retweet_graph_indiana")
     g = eg.buildEGraph()
     print g.edges(data = False)
     print len(g.edges())
@@ -468,4 +468,4 @@ if __name__ == '__main__':
     print len(g.nodes)
     nx.draw(g)
     plt.show()
-    
+    '''

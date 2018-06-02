@@ -4,8 +4,8 @@ from networkx.algorithms import bipartite
 
 if __name__ == '__main__':
     
-    g_original = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')#graph before adding recommended edges
-    g = nx.read_gpickle('../output_graph/retweet_graph_indiana_in_deg.pickle')#graph after adding recommended edges
+    g_original = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')#graph before adding recommended edges
+    g = nx.read_gpickle('../output_graph/retweet_graph_beefban_ratio.pickle')#graph after adding recommended edges
     
     edges = g.edges()
     
@@ -14,7 +14,8 @@ if __name__ == '__main__':
     bipartite_graph = nx.DiGraph()#for coloring
     
     for u,v in edges:
-        if g[u][v]['color'] == 'red':
+        
+        if 'color' in g[u][v] and g[u][v]['color'] == 'red':
             
             in_deg_u = g_original.in_degree(u)
             out_deg_u = g_original.out_degree(u)
@@ -30,7 +31,8 @@ if __name__ == '__main__':
             node_list.append(v)
             
             bipartite_graph.add_edge(u, v)#for coloring
-      
+        else:
+            g[u][v]['color'] = 'black'
     g_sub = g.subgraph(node_list)
       
     colors = [g[u][v]['color'] for u,v in g_sub.edges()]
