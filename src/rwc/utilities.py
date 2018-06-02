@@ -157,12 +157,13 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
 
 '''
     @param path: is the path to diGraph (if not None)
+    @param graph: is a diGraph (if not None)
     @param l: is the sorted list which contains new edges to add with their delta_RWC*link_predictor
               i.e. l = [((node_from, node_to),link_predictor*delta_rwc), ((node_from, node_to),link_predictor*delta_rwc),..]
     @param dictio: dictio version of the list l with the information of link_predictor too
               i.e. dictio = {(edge):(link_predictor*delta_rwc,link_predictor), ..}
     @param graph_name: name of graph
-    @param strategy: in_deg, ratio ...
+    @param strategy: in_deg, ratio, betwn (or, if greedy, in_deg_greedy, ratio_greedy, betwn_greedy)
     @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC.
             Finally save the .pickle new graph obtained by edges addiction.
 
@@ -197,7 +198,7 @@ def addEdgeToGraph(path, graph, l, dictio, graph_name, strategy):
         count +=1
     
     'Save new graph with added edges by current strategy'
-    #nx.write_gpickle(g, '../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
+    nx.write_gpickle(g, '../output_graph/'+graph_name+'_'+strategy+'.pickle', protocol=HIGHEST_PROTOCOL)
     
     #colors = [g[u][v]['color'] for (u,v) in g.edges()]
     #nx.draw(g, edges=g.edges(), edge_color=colors)
