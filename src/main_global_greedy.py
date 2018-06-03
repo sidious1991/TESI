@@ -80,11 +80,11 @@ if __name__ == '__main__':
   
     print '##########################---SIMULATIONS---###############################'
     
-    g = nx.read_gpickle('../outcomes/parted_graph.pickle')
+    g = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
 
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
-    graph_name = 'parted_graph'
-    strategies = ['in_deg','ratio','betwn','avg_in_deg']
+    graph_name = 'retweet_graph_indiana'
+    strategies = ['in_deg_greedy','ratio_greedy','betwn_greedy','avg_in_deg_greedy']
     '''
         graph_data_rwc = computeData(0,percent = 1)
         rwc(0.85, graph_data_rwc)
@@ -100,10 +100,12 @@ if __name__ == '__main__':
     
     #Loop over strategies:
     for i in range(0,3):
-        round_graph = g;
+        round_graph = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
         round_data = initGraphData;
         #sorted_x_y = ut.sortNodes(None, g, initGraphData[8], initGraphData[9], i)#sorted by type sorting 'i'
         r1= r;
+        print "rwc initial",r1[0], len(round_graph.edges())
+
         for k in range(0,20):  
             R= []
   
