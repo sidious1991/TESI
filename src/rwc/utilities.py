@@ -85,11 +85,12 @@ def sortNodes(path, graph, comms, partition, type_sorting):
                          else: nodes of each community ordered by AvgInDegree 
     @param percent_community: is the percentage of sorted (by type_sorting) vertices to consider in each community
     @param a: is the probability to continue (1 - a is the restart probability)
+    @param comms_part: if not none, is the tuple (communities,partition) of the graph to restart with
     @return the sorted_x and sorted_y nodes of communities (by type_sorting),
             the communities of the graph, the personalization vectors for the communities,
             the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method
 '''
-def computeData(path, graph, a, type_sorting, percent_community = 0.25):
+def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_part = None):
     
     if (path is None and graph is None):
         return ()
@@ -98,16 +99,24 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25):
     
     comms = {}
     partition = {}
-    i = 0
-       
-    comp = girvan_newman(nx.to_undirected(g))
-    t = tuple(sorted(c) for c in next(comp))
     
-    for c in t:
-        comms.update({i:c})
-        for node in c:
-            partition.update({node:i})
-        i+=1
+    #reuse the provided communities and partition
+    if comms_part is not None:
+        comms = comms_part[0]
+        partition = comms_part[1]
+    
+    #recalculate communities and partition of the graph
+    else:
+        i = 0
+       
+        comp = girvan_newman(nx.to_undirected(g))
+        t = tuple(sorted(c) for c in next(comp))
+    
+        for c in t:
+            comms.update({i:c})
+            for node in c:
+                partition.update({node:i})
+            i+=1
         
     num_x = len(comms[0])
     num_y = len(comms[1])

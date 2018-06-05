@@ -80,15 +80,11 @@ if __name__ == '__main__':
   
     print '##########################---SIMULATIONS---###############################'
     
-    g = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
+    g = nx.read_gpickle('../outcomes/retweet_graph_russia_march.pickle')
 
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
-    graph_name = 'retweet_graph_indiana'
+    graph_name = 'retweet_graph_russia_march'
     strategies = ['in_deg_greedy','ratio_greedy','betwn_greedy','avg_in_deg_greedy']
-    '''
-        graph_data_rwc = computeData(0,percent = 1)
-        rwc(0.85, graph_data_rwc)
-    '''
     
     initGraphData = ut.computeData(None, g, 0.85, 0, percent_community=1)
     
@@ -100,30 +96,37 @@ if __name__ == '__main__':
     
     #Loop over strategies:
     for i in range(0,3):
-        round_graph = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
+        
+        round_graph = nx.read_gpickle('../outcomes/retweet_graph_russia_march.pickle')
         round_data = initGraphData;
         #sorted_x_y = ut.sortNodes(None, g, initGraphData[8], initGraphData[9], i)#sorted by type sorting 'i'
         r1= r;
+        print strategies[i]+' \n'
         print "rwc initial",r1[0], len(round_graph.edges())
 
-        for k in range(0,20):  
-            R= []
+        for k in range(0,20): 
+             
+            R = []
   
             sorted_x_y = ut.sortNodes(None, round_graph, round_data[8], round_data[9], i)#sorted by type sorting 'i'
             sorted_dp = rwc_lib.deltaPredictorOrdered(None, round_graph, 0.85, 40, 40, sorted_x_y, round_data, r1)
 
             R.append(rwc_lib.fagin(sorted_dp,1))
+            
             print R[0][1]
+            
             (round_graph,opt,ratio,max_opt) = ut.addEdgeToGraph(None,round_graph,R[0][0],R[0][1],graph_name,strategies[i])
             
-            round_data = ut.computeData(None, round_graph, 0.85, i, percent_community=1)  
-           
+            #We assume that communities and partition do not change
+            round_data = ut.computeData(None, round_graph, 0.85, i, percent_community=1, comms_part=(round_data[8],round_data[9]))  
             
             r1 = rwc_lib.rwc(0.85, round_data)
+            
             print "rwc",r1[0]
+            
         print "RWC score after addiction of accepted edges =%13.10f"%r1[0] #%width.precisionf
-        print comment[i],"%13.10f"%opt
-        print "Maximum Optimum Decrease RWC : =%13.10f"%max_opt
+        #print comment[i],"%13.10f"%opt
+        #print "Maximum Optimum Decrease RWC : =%13.10f"%max_opt
         print "Real Total Decrease RWC =%13.10f"%(r[0]-r1[0]), " acceptance_ratio :",ratio
         print "-----------------------------------------------"
       
