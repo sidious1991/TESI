@@ -87,11 +87,11 @@ def deltaRwc(path, graph, a, data, edge):
     u_my = np.dot(np.transpose(u),mats_y[0])
     den_x = 1 + np.dot(np.transpose(u),mx_z)
     den_y = 1 + np.dot(np.transpose(u),my_z)
-    num_x = np.dot(mx_z,u_mx)
-    num_y = np.dot(my_z,u_my)
+    num_x = np.outer(mx_z,u_mx)
+    num_y = np.outer(my_z,u_my)
     
-    x_factor = np.dot((num_x/den_x),list(e_x.values()))#vector 
-    y_factor = np.dot((num_y/den_y),list(e_y.values()))#vector
+    x_factor = np.dot(np.dot(num_x, float(1/den_x)),list(e_x.values()))#vector 
+    y_factor = np.dot(np.dot(num_y, float(1/den_y)),list(e_y.values()))#vector
     
     ''' Sherman-Morrison Formula '''
     

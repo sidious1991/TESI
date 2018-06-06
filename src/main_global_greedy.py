@@ -80,10 +80,10 @@ if __name__ == '__main__':
   
     print '##########################---SIMULATIONS---###############################'
     
-    g = nx.read_gpickle('../outcomes/retweet_graph_russia_march.pickle')
+    g = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
 
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
-    graph_name = 'retweet_graph_russia_march'
+    graph_name = 'retweet_graph_beefban'
     strategies = ['in_deg_greedy','ratio_greedy','betwn_greedy','avg_in_deg_greedy']
     
     initGraphData = ut.computeData(None, g, 0.85, 0, percent_community=1)
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     #Loop over strategies:
     for i in range(0,3):
         
-        round_graph = nx.read_gpickle('../outcomes/retweet_graph_russia_march.pickle')
+        round_graph = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
         round_data = initGraphData;
         #sorted_x_y = ut.sortNodes(None, g, initGraphData[8], initGraphData[9], i)#sorted by type sorting 'i'
         r1= r;
