@@ -214,7 +214,7 @@ def fagin(data, k):
     print sortedR[0:min_k] # sorted list of : [((node_from, node_to),link_predictor*delta_rwc), ((node_from, node_to),link_predictor*delta_rwc),..]
     predictorR = {}
     for i in sortedR[0:min_k]:
-        predictorR.update({i[0]:(i[1],dictio_P[i[0]])})#(edge):(link_predictor*delta_rwc,link_predictor)
+        predictorR.update({i[0]:(dictio_I[i[0]],dictio_P[i[0]])})#(edge):(delta_rwc,link_predictor)
     
     return (sortedR[0:min_k],predictorR)
 

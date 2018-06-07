@@ -170,7 +170,7 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_pa
     @param l: is the sorted list which contains new edges to add with their delta_RWC*link_predictor
               i.e. l = [((node_from, node_to),link_predictor*delta_rwc), ((node_from, node_to),link_predictor*delta_rwc),..]
     @param dictio: dictio version of the list l with the information of link_predictor too
-              i.e. dictio = {(edge):(link_predictor*delta_rwc,link_predictor), ..}
+              i.e. dictio = {(edge):(delta_rwc,link_predictor), ..}
     @param graph_name: name of graph
     @param strategy: in_deg, ratio, betwn (or, if greedy, in_deg_greedy, ratio_greedy, betwn_greedy)
     @return new graph,total optimum delta RWC,ratio of accepted edges/proposed edges,maximum optimum delta RWC.
@@ -184,21 +184,26 @@ def addEdgeToGraph(path, graph, l, dictio, graph_name, strategy):
     
     g = nx.read_gpickle(path) if path is not None else graph
    
-    delta=0
+    delta = 0
     max_delta = 0 # maximum expected delta
     count=0
+    
     for i in range(0,len(l)):
 
         edge = l[i][0]
         
-        delta_dot_predictor = l[i][1]
+        #delta_dot_predictor = l[i][1]
         
-        pred = dictio[edge][1] #predictor for that edge
+        #pred = dictio[edge][1] #predictor for that edge
         #if pred == 0.0:
             #pred = 1.0
         
-        delta += delta_dot_predictor/pred
-        max_delta = min(max_delta,(delta_dot_predictor/pred))
+        #delta += delta_dot_predictor/pred
+        delta_rwc = dictio[edge][0]
+        normalized_adamic_adar = dictio[edge][1]
+        
+        max_delta = min(max_delta,delta_rwc)
+        delta += delta_rwc
         #print delta
         #print edge
         
@@ -250,7 +255,7 @@ def M(path, graph, a, personal):
 '''
     @param g: the graph to consider
     @param edge: the edge to predict
-    @return the 'Adamic Adar' index for the predicted edge
+    @return the 'Adamic-Adar' normalized index for the predicted edge.          
 '''    
 def AdamicAdarIndex(g, edge):  
     
@@ -264,13 +269,19 @@ def AdamicAdarIndex(g, edge):
     common = nx.common_neighbors(g_undirect, source, dest)
     
     index = 0.0
+    number_of_neighbors = 0
     
+    #Adamic-Adar:
     for neigh in common:
         index += 1/math.log(g_undirect.degree(neigh), 10)
+        number_of_neighbors += 1
     
-    index += 1 #To avoid zero indices, we scale them
+    #Maximum Adamic-Adar:
+    max_adamic_adar = (1/math.log(2,10))*number_of_neighbors
     
-    return index
+    normalized_adamic_adar = (float(index)/float(max_adamic_adar)) if max_adamic_adar != 0 else 0
+    
+    return normalized_adamic_adar
    
 '''
     @param g: the digraph

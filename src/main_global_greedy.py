@@ -80,10 +80,10 @@ if __name__ == '__main__':
   
     print '##########################---SIMULATIONS---###############################'
     
-    g = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
+    g = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
 
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : ", "Opt Total Decrease RWC -- avg in_degree type : "]
-    graph_name = 'retweet_graph_beefban'
+    graph_name = 'retweet_graph_indiana'
     strategies = ['in_deg_greedy','ratio_greedy','betwn_greedy','avg_in_deg_greedy']
     
     initGraphData = ut.computeData(None, g, 0.85, 0, percent_community=1)
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     #Loop over strategies:
     for i in range(0,3):
         
-        round_graph = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')
+        round_graph = nx.read_gpickle('../outcomes/retweet_graph_indiana.pickle')
         round_data = initGraphData;
         #sorted_x_y = ut.sortNodes(None, g, initGraphData[8], initGraphData[9], i)#sorted by type sorting 'i'
         r1= r;
@@ -109,7 +109,7 @@ if __name__ == '__main__':
             R = []
   
             sorted_x_y = ut.sortNodes(None, round_graph, round_data[8], round_data[9], i)#sorted by type sorting 'i'
-            sorted_dp = rwc_lib.deltaPredictorOrdered(None, round_graph, 0.85, 40, 40, sorted_x_y, round_data, r1)
+            sorted_dp = rwc_lib.deltaPredictorOrdered(None, round_graph, 0.85, 15, 15, sorted_x_y, round_data, r1)
 
             R.append(rwc_lib.fagin(sorted_dp,1))
             
