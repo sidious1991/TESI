@@ -1,0 +1,7 @@
+
+
+b = 0.5
+
+p(x,y) = b^(l-1)
+
+l = lunghezza dello shortest path da x a y
