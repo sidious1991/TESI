@@ -2,10 +2,8 @@ from __future__ import division
 import networkx as nx
 import numpy as np
 import math
-from buildRetweetGraph.endorsementgraph import EndorsementGraph
 from bsddb.dbshelve import HIGHEST_PROTOCOL
 #import itertools
-import matplotlib.pyplot as plt
 from scipy import linalg
 from networkx.algorithms.community.centrality import girvan_newman
 
@@ -200,7 +198,7 @@ def addEdgeToGraph(path, graph, l, dictio, graph_name, strategy):
         
         #delta += delta_dot_predictor/pred
         delta_rwc = dictio[edge][0]
-        normalized_adamic_adar = dictio[edge][1]
+        link_predictor = dictio[edge][1]
         
         max_delta = min(max_delta,delta_rwc)
         delta += delta_rwc
@@ -282,7 +280,38 @@ def AdamicAdarIndex(g, edge):
     normalized_adamic_adar = (float(index)/float(max_adamic_adar)) if max_adamic_adar != 0 else 0
     
     return normalized_adamic_adar
-   
+ 
+'''
+    @param g: the graph to consider
+    @param edge: the edge to predict
+    @return the 'Katz' normalized score for the predicted edge.
+'''
+def KatzScore(g, edge): 
+
+    if g is None or edge is None:
+        return
+    
+    g_undirect = nx.to_undirected(g)
+    
+    source = edge[0]
+    dest = edge[1]
+    
+    katz_score = 0.0
+    total_paths = 0 #number of paths from source to dest
+    beta = 0.005 #exponentially damped by length
+    
+    for path in nx.all_simple_paths(g_undirect, source=source, target=dest, cutoff=5):
+        
+        katz_score += (beta**(len(path)-1)) 
+        total_paths += 1
+     
+    #Maximum Katz-score:       
+    max_katz_score = (beta**2)*total_paths
+    
+    normalized_katz_score = (float(katz_score)/float(max_katz_score)) if max_katz_score != 0 else 0
+    
+    return normalized_katz_score
+         
 '''
     @param g: the digraph
     @param node: the node to consider
@@ -468,25 +497,4 @@ def polarizationScore(path, graph, data):
     return dictio_polarization[iter-1]
 '''
 if __name__ == '__main__':
-    '''
-    graphData = computeData('../../outcomes/parted_graph.pickle', None, 40, 0.85)
-    
-    pol = polarizationScore('../../outcomes/parted_graph.pickle', None, graphData)
-    print pol
-    
-    tuple = sortNodes('../../outcomes/parted_graph.pickle', None, 4)
-    print tuple[0]
-    print tuple[1]
-    
-    p = acceptanceProbabilityGP('../../outcomes/parted_graph.pickle', None, (50,109), graphData)
-    print p
-    '''    
-    ''' eg = EndorsementGraph("retweet_graph_indiana")
-    g = eg.buildEGraph()
-    print g.edges(data = False)
-    print len(g.edges())
-    print g.nodes(data = False)
-    print len(g.nodes)
-    nx.draw(g)
-    plt.show()
-    '''
+    pass

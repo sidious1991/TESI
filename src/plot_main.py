@@ -1,11 +1,51 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.algorithms import bipartite
+import sys, os
 
 if __name__ == '__main__':
     
-    g_original = nx.read_gpickle('../outcomes/retweet_graph_beefban.pickle')#graph before adding recommended edges
-    g = nx.read_gpickle('../output_graph/retweet_graph_beefban_ratio.pickle')#graph after adding recommended edges
+    dir_output_graph_content = []
+    dir_outcomes_content = []
+    graph_index = -1
+    
+    print 'Available files: \n'
+    
+    for root, dirs, files in os.walk('../outcomes'):
+        for i in range(0,len(files)):
+            print str(i)+'-'+files[i]
+            dir_outcomes_content.append(files[i])
+    
+    while (graph_index >= len(dir_outcomes_content) or graph_index < 0):
+        try:
+            graph_index = int(raw_input("\nChoose from one of these graphs and type its corresponding index: \n"))
+        except EOFError as error:
+            print '\nBye!'
+            sys.exit(0)
+    
+    graph_outcomes_name = (dir_outcomes_content[graph_index].split('.'))[0]
+    graph_index = -1
+    
+    for root, dirs, files in os.walk('../output_graph'):
+        counter = 0
+        for i in range(0,len(files)):
+            if graph_outcomes_name in files[i]:
+                dir_output_graph_content.append(files[i])
+                print str(counter)+'-'+files[i]
+                counter += 1
+    
+    while (graph_index >= len(dir_output_graph_content) or graph_index < 0):
+        try:
+            graph_index = int(raw_input("\nChoose the output_graph in function of strategy: \n"))
+        except EOFError as error:
+            print '\nBye!'
+            sys.exit(0)
+    
+    graph_output_graph_name = (dir_output_graph_content[graph_index].split('.'))[0]
+    
+    
+    g_original = nx.read_gpickle('../outcomes/'+graph_outcomes_name+'.pickle')#graph before adding recommended edges
+    g = nx.read_gpickle('../output_graph/'+graph_output_graph_name+'.pickle')#graph after adding recommended edges
     
     edges = g.edges()
     
@@ -33,6 +73,7 @@ if __name__ == '__main__':
             bipartite_graph.add_edge(u, v)#for coloring
         else:
             g[u][v]['color'] = 'black'
+            
     g_sub = g.subgraph(node_list)
       
     colors = [g[u][v]['color'] for u,v in g_sub.edges()]

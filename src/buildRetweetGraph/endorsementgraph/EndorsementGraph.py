@@ -25,7 +25,7 @@ class EndorsementGraph:
         dictio_edges = {} # (source, dest) : retweetcount (key : value)
         
         #Build digraph read from file and write back pickled
-        with open ('../../inputs/'+inputname+'.txt') as f:
+        with open ('../inputs/'+inputname+'.txt') as f:
             for line in f:
                 l = line.split(',')
                 source = l[0]
@@ -56,7 +56,7 @@ class EndorsementGraph:
                 digraph.add_edge(dictio_nodes_convert[key[0]], dictio_nodes_convert[key[1]], color = 'black', prob = dictio_edges[key]/dictio_nodes[key[0]])
                 
         #serialization
-        nx.write_gpickle(digraph, '../../outcomes/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
+        nx.write_gpickle(digraph, '../outcomes/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
         
         return digraph
     
