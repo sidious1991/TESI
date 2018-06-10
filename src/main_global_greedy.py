@@ -125,7 +125,7 @@ if __name__ == '__main__':
     print "---------------------------------------------------------------------------------------------------------------------------"
     
     #Loop over strategies:
-    for i in range(0,1):
+    for i in range(0,len(strategies)):
         
         round_graph = nx.read_gpickle(path)
         round_data = initGraphData;

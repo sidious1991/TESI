@@ -6,6 +6,7 @@ from bsddb.dbshelve import HIGHEST_PROTOCOL
 #import itertools
 from scipy import linalg
 from networkx.algorithms.community.centrality import girvan_newman
+from networkx.exception import NetworkXNoPath
 
 '''
     Source : 'Reducing Controversy by Connecting Opposing Views' - Garimella et alii
@@ -86,7 +87,8 @@ def sortNodes(path, graph, comms, partition, type_sorting):
     @param comms_part: if not none, is the tuple (communities,partition) of the graph to restart with
     @return the sorted_x and sorted_y nodes of communities (by type_sorting),
             the communities of the graph, the personalization vectors for the communities,
-            the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method
+            the c_x and c_y vectors, the partition and mats_x, mats_y tuple from M method,
+            the inter_community_edges_ratio.
 '''
 def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_part = None):
     
@@ -115,7 +117,14 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_pa
             for node in c:
                 partition.update({node:i})
             i+=1
-        
+    
+    '''For link prediction. See Katz score.'''
+    sub_0 = nx.subgraph(g, comms[0])
+    sub_1 = nx.subgraph(g, comms[1])
+    
+    inter_community_edges_ratio = float(len(g.edges()) - len(sub_0.edges()) - len(sub_1.edges())) / float(len(g.edges()))
+    '''For link prediction. See Katz score.'''
+
     num_x = len(comms[0])
     num_y = len(comms[1])
     p_x = 1/num_x
@@ -159,7 +168,7 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_pa
     mats_x = M(None, g, a, e_x)
     mats_y = M(None, g, a, e_y)
     
-    return (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition)
+    return (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,partition,inter_community_edges_ratio)
     
 
 '''
@@ -284,34 +293,27 @@ def AdamicAdarIndex(g, edge):
 '''
     @param g: the graph to consider
     @param edge: the edge to predict
-    @return the 'Katz' normalized score for the predicted edge.
+    @param inter_communtity_edges_ratio: the percentage of edges between the two communities
+           with respect the total edges of the graph
+    @return (alpha)*KatzScore + (1-alpha)*inter_community_edges_ratio
 '''
-def KatzScore(g, edge): 
+def KatzScore(g, edge, inter_community_edges_ratio): 
 
     if g is None or edge is None:
         return
     
-    g_undirect = nx.to_undirected(g)
-    
     source = edge[0]
     dest = edge[1]
+    beta = 0.05
+    alpha = 0.85
     
-    katz_score = 0.0
-    total_paths = 0 #number of paths from source to dest
-    beta = 0.005 #exponentially damped by length
-    
-    for path in nx.all_simple_paths(g_undirect, source=source, target=dest, cutoff=5):
+    try:
+        l = nx.shortest_path_length(g, source = source, target = dest)
+        return alpha*(beta ** (l-1)) + (1-alpha)*inter_community_edges_ratio
         
-        katz_score += (beta**(len(path)-1)) 
-        total_paths += 1
-     
-    #Maximum Katz-score:       
-    max_katz_score = (beta**2)*total_paths
+    except NetworkXNoPath:
+        return (1-alpha)*inter_community_edges_ratio
     
-    normalized_katz_score = (float(katz_score)/float(max_katz_score)) if max_katz_score != 0 else 0
-    
-    return normalized_katz_score
-         
 '''
     @param g: the digraph
     @param node: the node to consider

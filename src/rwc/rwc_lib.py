@@ -16,7 +16,7 @@ import math
 '''    
 def rwc(a, data):
     
-    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data    
+    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,inter_comm_edges_ratio) = data    
     
     sub_c = np.subtract(c_x,c_y)
     sub_c_alpha = np.dot((1-a),sub_c)
@@ -49,7 +49,7 @@ def deltaRwc(path, graph, a, data, edge):
     
     g = nx.read_gpickle(path) if path is not None else graph
 
-    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part) = data 
+    (sorted_x,sorted_y,e_x,e_y,c_x,c_y,mats_x,mats_y,comms,part,inter_comm_edges_ratio) = data 
     
     sourcev = edge[0]
     destv = edge[1]
@@ -144,12 +144,12 @@ def deltaPredictorOrdered(path, graph, a, k1, k2, sorted_x_y, data, r):
             if adj_mat[sorted_x[i][0]][sorted_y[j][0]] == 0:
                 e = (sorted_x[i][0],sorted_y[j][0])
                 dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
+                dictio_predictor.update({e : ut.KatzScore(g, e, data[10])})
                 
             if adj_mat[sorted_y[j][0]][sorted_x[i][0]] == 0:
                 e = (sorted_y[j][0],sorted_x[i][0])
                 dictio_delta.update({e : deltaRwc(None, g, a, data, e)})
-                dictio_predictor.update({e : ut.AdamicAdarIndex(g, e)})
+                dictio_predictor.update({e : ut.KatzScore(g, e, data[10])})
                         
     dict_delta_sorted = sorted(dictio_delta.iteritems(), key=lambda (k,v):(v,k))
     dict_predictor_sorted = sorted(dictio_predictor.iteritems(), key=lambda (k,v):(v,k), reverse=True)

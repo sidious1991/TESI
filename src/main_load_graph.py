@@ -25,7 +25,7 @@ if __name__ == '__main__':
     print graph_name
 
 
-    eg = EndorsementGraph(graph_name)
-    g = eg.buildEGraph()
+    eg = EndorsementGraph('../inputs',graph_name)
+    g = eg.buildEGraph('../outcomes')
 
     print 'File '+graph_name+' correctly loaded in directory ../outcomes'

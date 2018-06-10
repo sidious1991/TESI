@@ -2,6 +2,8 @@
 
 b = 0.5
 
-p(x,y) = b^(l-1)
+katz(x,y) = b^(l-1)
 
 l = lunghezza dello shortest path da x a y
+
+p(x,y) = (alpha)*katz(x,y) + (1-alpha)*(archi tra comunità/archi totali)

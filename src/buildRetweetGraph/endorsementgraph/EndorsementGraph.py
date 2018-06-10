@@ -6,8 +6,15 @@ import pickle
 
 class EndorsementGraph:
     
-    def __init__(self, inputname):
+    def __init__(self, inputdir, inputname):
+        self.__inputdir = inputdir
         self.__inputname = inputname
+
+    def setInputDir(self, inputdir):
+        self.__inputdir = inputdir
+        
+    def getInputDir(self):
+        return self.__inputdir
 
     def setInputName(self, inputname):
         self.__inputname = inputname
@@ -15,7 +22,9 @@ class EndorsementGraph:
     def getInputName(self):
         return self.__inputname
     
-    def buildEGraph(self):
+    def buildEGraph(self, destination_dir):
+        
+        inputdir = self.getInputDir()
         inputname = self.getInputName()
         digraph = nx.DiGraph(inputname = inputname)
         
@@ -25,7 +34,7 @@ class EndorsementGraph:
         dictio_edges = {} # (source, dest) : retweetcount (key : value)
         
         #Build digraph read from file and write back pickled
-        with open ('../inputs/'+inputname+'.txt') as f:
+        with open (inputdir+'/'+inputname+'.txt') as f:
             for line in f:
                 l = line.split(',')
                 source = l[0]
@@ -56,7 +65,7 @@ class EndorsementGraph:
                 digraph.add_edge(dictio_nodes_convert[key[0]], dictio_nodes_convert[key[1]], color = 'black', prob = dictio_edges[key]/dictio_nodes[key[0]])
                 
         #serialization
-        nx.write_gpickle(digraph, '../outcomes/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
+        nx.write_gpickle(digraph, destination_dir+'/'+inputname+'.pickle', protocol=pickle.HIGHEST_PROTOCOL)
         
         return digraph
     
