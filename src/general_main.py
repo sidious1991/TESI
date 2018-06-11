@@ -52,7 +52,7 @@ def greedy_alg():
         
     path = '../outcomes/'+graph_name+'.pickle'
     
-    print 'Chosen graph: %s \n'%graph_name
+    print '\n##### Chosen graph: %s #####\n'%graph_name
     print '########---Study of ratio in_degree/(out_degree + 1) in its average and its variance. Study of the trend of (in_degree, out_degree + 1, ratio) too.---########'
     
     print '-----------------------------------------------------------'
@@ -175,7 +175,7 @@ def global_alg():
         
     path = '../outcomes/'+graph_name+'.pickle'
     
-    print 'Chosen graph: %s \n'%graph_name
+    print '\n##### Chosen graph: %s ######\n'%graph_name
     print '########---Study of ratio in_degree/(out_degree + 1) in its average and its variance. \nStudy of the trend of (in_degree, out_degree + 1, ratio) too.---########'
     
     print '-----------------------------------------------------------'
@@ -291,7 +291,7 @@ def local_alg():
         
     path = '../outcomes/'+graph_name+'.pickle'
     
-    print 'Chosen graph: %s \n'%graph_name
+    print '\n##### Chosen graph: %s #####\n'%graph_name
     print '########---Study of ratio in_degree/(out_degree + 1) in its average and its variance. \nStudy of the trend of (in_degree, out_degree + 1, ratio) too.---########'
     
     print '-----------------------------------------------------------'
