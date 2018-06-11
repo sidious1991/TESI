@@ -1,0 +1,28 @@
+Paolo&Stefano -- Lavoro di tesi:
+
+1)In riferimento alle modalità di riduzione del grado di controversia di un grafo sociale utilizzate nel paper "Reducing controversy by connecting opposing view", è stato implementato un framework (in python con l'ausilio della libreria networkx) con i seguenti scopi: 
+
+-Acquisizione dei grafi twitter relativi a particolari topic, identificati da particolari hashtag, analizzati anche sul paper;
+
+-Implementazione e applicazione della strategia di recommendation ROV-AP ('Recommend opposing view - with acceptance probability') esposta sul paper e sua analisi. Per rilevare le echo-chambers (comunità) di ogni grafo è stato utilizzato l'algoritmo di 'Girvan-Newman', che rimuove ad ogni passo l'arco con betweenness più elevata; 
+
+-Sviluppo di una strategia alternativa di recommendation ROV-RATIO-AP ('Recommend opposing view based on ratio of in/out degree - with acceptance probability'). Considerazioni e motivazioni della scelta della nuova strategia (perché dovrebbe funzionare meglio rispetto a quella proposta sul paper); 
+
+-Analisi dell'efficacia della strategia ROV-RATIO-AP applicata sui grafi considerati nel paper e variando il contesto da locale a globale (ossia conducendo i test su porzioni del grafo o sul grafo totale). Per tale analisi, ROV-AP è stata utilizzata come 'baseline' per valutare ROV-RATIO-AP. 
+E' da sottolineare che l'efficacia di ROV-RATIO-AP è funzione di particolari caratteristiche della struttura del grafo;
+
+-Utilizzo di un approccio greedy della strategia ROV-RATIO-AP, che permette di consigliare k archi in k passi, scegliendo ad ogni passo l'arco migliore in termini di deltaRWC*probabilità di accettazione. Pertanto questo approccio a differenza di quello locale(o globale), che in un solo passo consiglia l'insieme dei k archi migliori, consente di effettuare un'analisi più accurata dell'efficacia della nostra strategia (ROV-RATIO-AP) in quanto, per la scelta di ogni arco, tiene conto dello stato attuale della rete derivante dalle aggiunte di archi nei passi precedenti.
+
+-Utilizzo di una probabilità di accettazione (degli archi consigliati) che è funzione sia del predittore Katz che della percentuale di archi tra le comunità ('echo-chambers') rispetto al totale degli archi del grafo, ossia:
+
+p(x,y) = (alpha)*katz(x,y) + (1-alpha)*(archi tra comunità/archi totali)
+
+Dove (x,y) è l'arco da consigliare e katz(x,y) è approssimato (considerando solo la lunghezza dell'eventuale shortest path tra x e y e trascurando le altre componenti in quanto contribuiscono poco alla stima e comportano un eccessivo peso computazionale per grafi molto grandi) ed è opportunamente normalizzato. Il fattore alpha è t.c. 0<=alpha<=1 e dà un opportuno peso alle due componenti (nei test abbiamo utilizzato un peso alpha = 0.85 per far dare più importanza a katz score).
+
+-Considerazioni sull'efficacia e l'applicabilità di altri predittori quali e.g. Adamic Adar.
+
+-Sviluppo di uno strumento per visualizzare (al termine dell'esecuzione del recommendation system) gli archi consigliati e i nodi ai loro estremi con le loro caratteristiche (in degree, out degree e rapporto).
+
+
+
+

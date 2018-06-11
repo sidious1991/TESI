@@ -1,0 +1,24 @@
+Paolo & Stefano - Thesis work:
+
+1) With reference to the methods of reducing the degree of controversy of a social graph used in the paper "Reducing controversy by connecting opposing views", a framework has been implemented (in python with the help of the networkx library) for the following purposes:
+
+-Acquisition of twitter graphs related to particular topics, identified by particular hashtags, also analyzed on the paper;
+
+- Implementation and application of the recommendation ROV-AP strategy ('Recommend opposing view - with acceptance probability') exposed on the paper and its analysis. To detect the echo-chambers (communities) of each graph, the 'Girvan-Newman' algorithm was used, which removes the edge with the highest betweenness at each step;
+
+-Development of an alternative strategy of recommendation ROV-RATIO-AP ('Recommend opposing view based on ratio of in / out degree - with acceptance probability'). Considerations and motivations for the choice of the new strategy (why should it work better than the one proposed in the paper?);
+
+-Analysis of the effectiveness of the ROV-RATIO-AP strategy applied on the graphs considered in the paper and by varying the context from local to global (ie by conducting the tests on portions of the graph or on the total graph). For this analysis, ROV-AP was used as a 'baseline' to evaluate ROV-RATIO-AP.
+It should be noted that the effectiveness of ROV-RATIO-AP is a function of particular characteristics of the structure of the graph, that we will exhibit in the thesis;
+
+-Use of a greedy approach of the ROV-RATIO-AP strategy, which allows to recommend k edges in k steps, choosing at each step the best edge in terms of deltaRWC * acceptance probability. Therefore this approach, unlike the local (or global) one, which in a single step recommends the set of best k edges, allows a more accurate analysis of the effectiveness of our strategy (ROV-RATIO-AP) as , for the choice of each edge, takes into account the current network status deriving from the addition of edge in the previous steps.
+
+-Use of a acceptance probability (of the recommended edges) that is a function of both the Katz predictor and the percentage of edges between the communities ('echo-chambers') with respect to the total of the edges of the graph, namely:
+
+p (x, y) = (alpha) * katz (x, y) + (1-alpha) * (edges between communities / total edges)
+
+Where (x, y) is the edge to be recommended and katz (x, y) is approximated (considering only the length of any shortest path between x and y and neglecting the other components as they contribute little to estimation and involve excessive computational weight for very large graphs) and is appropriately normalized. The alpha factor is t.c. 0 <= alpha <= 1 and gives an appropriate weight to the two components (in tests we used an alpha weight = 0.85 to give more importance to katz score).
+
+-Considerations on the effectiveness and applicability of other predictors such as e.g. Adamic Adar.
+
+-Development of a tool to visualize (at the end of the recommendation system execution) the recommended edges and the nodes at their ends with their characteristics (in degree, out degree and ratio).
