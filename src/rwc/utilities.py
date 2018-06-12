@@ -123,6 +123,8 @@ def computeData(path, graph, a, type_sorting, percent_community = 0.25, comms_pa
     sub_1 = nx.subgraph(g, comms[1])
     
     inter_community_edges_ratio = float(len(g.edges()) - len(sub_0.edges()) - len(sub_1.edges())) / float(len(g.edges()))
+    
+    print '\n inter-community edges ratio = %f'%inter_community_edges_ratio
     '''For link prediction. See Katz score.'''
 
     num_x = len(comms[0])
