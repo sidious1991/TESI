@@ -1,8 +1,8 @@
 import tweepy
 import numpy as np
+import time
 import networkx as nx
 from networkx.algorithms import bipartite
-import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 from bsddb.dbshelve import HIGHEST_PROTOCOL
 import rwc.rwc_lib as rwc_lib
@@ -101,6 +101,7 @@ def greedy_alg():
     print "Initial RWC score =%13.10f"%r[0] #%width.precisionf
     print "---------------------------------------------------------------------------------------------------------------------------"
     
+    start_time = time.time()
     #Loop over strategies:
     for i in range(0,len(strategies)):
         
@@ -136,6 +137,8 @@ def greedy_alg():
         print "-----------------------------------------------"
       
     print "-------------------------------------------------End of simulation---------------------------------------------------------"  
+    print "Time elapsed: %f"%(time.time() - start_time)
+
 
 '''-----Global-----'''
 def global_alg():
@@ -226,6 +229,7 @@ def global_alg():
     print "Initial RWC score =%13.10f"%r[0] #%width.precisionf
     print "---------------------------------------------------------------------------------------------------------------------------"
     
+    start_time = time.time()
     #Loop over strategies:
     for i in range(0,len(strategies)):
              
@@ -240,7 +244,7 @@ def global_alg():
         print R[i][1]
         
         (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph(path,None,R[i][0],R[i][1],graph_name,strategies[i])
-        finalGraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=1)  
+        finalGraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=1, comms_part=(initGraphData[8],initGraphData[9]))  
         
         r1 = rwc_lib.rwc(0.85, finalGraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1[0] #%width.precisionf
@@ -250,6 +254,7 @@ def global_alg():
         print "-----------------------------------------------"
       
     print "-------------------------------------------------End of simulation---------------------------------------------------------"  
+    print "Time elapsed: %f"%(time.time() - start_time)
 
 '''-----Local-----'''
 def local_alg():
@@ -334,6 +339,7 @@ def local_alg():
     comment = ["Opt Total Decrease RWC -- in_degree type (HIGH-TO-HIGH) : ","Opt Total Decrease RWC -- ratio type : ","Opt Total Decrease RWC -- betweenness centrality : "]
     strategies = ['in_deg','ratio','betwn']
 
+    start_time = time.time()
     for i in range(0,len(strategies)):
         
         graphData = ut.computeData(None, g, 0.85, i, percent_community=percent_comm)
@@ -352,7 +358,7 @@ def local_alg():
         print R[i][1]
         
         (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph(path,None,R[i][0],R[i][1],graph_name,strategies[i])
-        mygraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=percent_comm)  
+        mygraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=percent_comm, comms_part=(graphData[8],graphData[9]))  
         
         r1 = rwc_lib.rwc(0.85, mygraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1[0] #%width.precisionf
@@ -362,6 +368,7 @@ def local_alg():
         print "-----------------------------------------------"
       
     print "-------------------------------------------------End of simulation---------------------------------------------------------"
+    print "Time elapsed: %f"%(time.time() - start_time)
 
 '''-----Plot-----'''
 def plot():    

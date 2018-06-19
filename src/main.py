@@ -11,6 +11,8 @@ auth.set_access_token("", "")
 api = tweepy.API(auth)
 
 
+'''NON USARE QUESTO MAIN PER LE SIMULAZIONI'''
+
 if __name__ == '__main__':  
     
     #from one month earlier to a week later the election date in Sicily

@@ -140,7 +140,7 @@ if __name__ == '__main__':
         print R[i][1]
         
         (new_graph,opt,ratio,max_opt) = ut.addEdgeToGraph(path,None,R[i][0],R[i][1],graph_name,strategies[i])
-        finalGraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=1)  
+        finalGraphData = ut.computeData(None, new_graph, 0.85, i, percent_community=1, comms_part=(initGraphData[8],initGraphData[9]))  
         
         r1 = rwc_lib.rwc(0.85, finalGraphData)
         print "RWC score after addiction of accepted edges =%13.10f"%r1[0] #%width.precisionf
