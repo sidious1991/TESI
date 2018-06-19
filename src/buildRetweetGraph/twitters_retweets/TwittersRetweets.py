@@ -56,7 +56,7 @@ class TwittersRetweets:
 
     '''
     @param: path is the path to the text file in which to write all the retweets of the hashtag indicated in the query.
-    @return: dictioRetweets, that is a dictionary like {(retweetuser,tweetuser):{retweetprob:..},...},
+    @return: dictioRetweets, that is a dictionary like {(retweetuser,tweetuser):{retweetcount:..},...},
              of retweets about the query.
     '''
     def computeRetweets(self,path):
