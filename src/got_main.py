@@ -1,8 +1,8 @@
 import tweepy
 import buildRetweetGraph.twitters_retweets as b
 
-auth = tweepy.OAuthHandler("MmmyW1HEqjNGVGtpECx5fvHLH", "WwAgwBr0Jue77YqGs0voir29tc4HEClFrgo0oGm42i0EToA8cq")
-auth.set_access_token("928998853361176578-zfPgfVajCvmIp8JoHxwSC7MfDf0lfgL", "G5r0R3iyO8ZOFYEK1UyIWJhWA4vWJoKkq5d2fcSz2EoOp")
+auth = tweepy.OAuthHandler("", "")
+auth.set_access_token("", "")
 api = tweepy.API(auth)
 
 if __name__ == '__main__':  
