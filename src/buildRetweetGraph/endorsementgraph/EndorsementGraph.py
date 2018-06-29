@@ -58,7 +58,7 @@ class EndorsementGraph:
     
             #Set nodes of the endorsement graph
             for key in dictio_nodes.keys():
-                digraph.add_node(dictio_nodes_convert[key], totalretweetcount = dictio_nodes[key])
+                digraph.add_node(dictio_nodes_convert[key], username = key, totalretweetcount = dictio_nodes[key])
                 
             #Set edges of the endorsement graph
             for key in dictio_edges.keys():
